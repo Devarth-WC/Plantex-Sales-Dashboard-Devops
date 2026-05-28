@@ -1,0 +1,408 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block page_title %}Role Management{% endblock %}
+{% block dashboard_title %}Role Management{% endblock %}
+{% block view_type %}role_management{% endblock %}
+
+{% block extra_head_css %}
+    /* Hide sidebar status & refresh on management pages only */
+    .sidebar-status, .sidebar-refresh-btn { 
+        display: none !important; 
+    }
+    .management-container {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 24px;
+        align-items: start;
+    }
+    @media (max-width: 1024px) {
+        .management-container {
+            grid-template-columns: 1fr;
+        }
+    }
+    .role-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 20px;
+    }
+    .role-item-card {
+        background: var(--surface);
+        backdrop-filter: blur(16px);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius);
+        padding: 24px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: var(--card-shadow);
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+    .role-item-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--card-shadow-hover);
+        border-color: rgba(79, 70, 229, 0.2);
+    }
+    .role-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .role-name {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .feature-tag-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    .feature-tag {
+        background: rgba(6, 182, 212, 0.08);
+        border: 1px solid rgba(6, 182, 212, 0.15);
+        color: var(--accent);
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .role-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border-light);
+    }
+    .action-btn {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 8px;
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+        text-decoration: none;
+    }
+    .btn-edit {
+        background: var(--surface2);
+        color: var(--text2);
+        border-color: var(--border);
+    }
+    .btn-edit:hover {
+        background: var(--surface3);
+        border-color: var(--accent);
+        color: var(--accent);
+    }
+    .btn-delete {
+        background: var(--danger-soft);
+        color: var(--danger);
+        border-color: rgba(220, 38, 38, 0.1);
+    }
+    .btn-delete:hover {
+        background: var(--danger);
+        color: white;
+    }
+
+    .form-card {
+        background: var(--surface);
+        backdrop-filter: blur(16px);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius);
+        padding: 24px;
+        box-shadow: var(--card-shadow);
+        position: sticky;
+        top: 84px;
+    }
+    .form-title {
+        font-size: 16px;
+        font-weight: 700;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--text);
+    }
+    .form-group {
+        margin-bottom: 20px;
+    }
+    .form-label {
+        display: block;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--muted);
+        margin-bottom: 8px;
+    }
+    .form-input {
+        width: 100%;
+        padding: 12px 16px;
+        background: rgba(255, 255, 255, 0.4);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        font-family: 'Inter', sans-serif;
+        color: var(--text);
+        outline: none;
+        transition: all 0.25s ease;
+    }
+    .form-input:focus {
+        border-color: var(--accent);
+        background: white;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+    }
+    
+    .permission-selector {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        max-height: 250px;
+        overflow-y: auto;
+        padding-right: 4px;
+    }
+    .permission-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        background: rgba(255, 255, 255, 0.4);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        transition: all 0.25s ease;
+        user-select: none;
+    }
+    .permission-item:hover {
+        background: white;
+        border-color: rgba(79, 70, 229, 0.3);
+    }
+    .permission-item.selected {
+        background: rgba(6, 182, 212, 0.1);
+        border-color: var(--accent);
+    }
+    .permission-item input {
+        display: none;
+    }
+    .permission-info {
+        flex: 1;
+    }
+    .permission-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+    }
+    .permission-checked-icon {
+        color: var(--accent);
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+    .permission-item.selected .permission-checked-icon {
+        opacity: 1;
+    }
+
+    .submit-btn {
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        color: white;
+        border: none;
+        border-radius: var(--radius-sm);
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 8px;
+    }
+    .submit-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+    }
+    .cancel-btn {
+        width: 100%;
+        padding: 10px;
+        background: none;
+        border: 1px solid var(--border);
+        color: var(--muted);
+        border-radius: var(--radius-sm);
+        font-weight: 500;
+        font-size: 13px;
+        cursor: pointer;
+        margin-top: 10px;
+    }
+    .cancel-btn:hover {
+        background: var(--surface2);
+        color: var(--text2);
+    }
+{% endblock extra_head_css %}
+{% block extra_head_scripts %}{% endblock %}
+
+{% block topbar_filters %}{% endblock %}
+
+{% block dashboard_content %}
+<div class="management-container">
+    <div class="role-list-section">
+        <div class="role-grid">
+            {% for r in roles %}
+            <div class="role-item-card" data-role-id="{{ r.id }}" data-name="{{ r.name }}" data-features='[{% for f in r.features.all %}"{{ f.id }}"{% if not forloop.last %},{% endif %}{% endfor %}]'>
+                <div class="role-header">
+                    <div class="role-name">
+                        <span class="material-icons-round" style="color: var(--accent);">admin_panel_settings</span>
+                        {{ r.name }}
+                    </div>
+                </div>
+                <div class="feature-tag-container">
+                    {% for f in r.features.all %}
+                    <span class="feature-tag">
+                        <span class="material-icons-round" style="font-size: 12px;">check</span>
+                        {{ f.name }}
+                    </span>
+                    {% empty %}
+                    <span style="color: var(--muted); font-size: 12px; font-style: italic;">No features assigned</span>
+                    {% endfor %}
+                </div>
+                <div class="role-actions">
+                    {% if r.name != 'Admin' %}
+                    <button class="action-btn btn-edit" onclick="editRole(this)">
+                        <span class="material-icons-round" style="font-size: 16px;">edit</span>
+                        Edit Role
+                    </button>
+                    <form method="POST" action="{% url 'role-management' %}" style="flex: 1; display: flex;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete">
+                        <input type="hidden" name="role_id" value="{{ r.id }}">
+                        <button type="submit" class="action-btn btn-delete" onclick="return confirm('Delete this role? Users with this role will lose their assigned permissions.')">
+                            <span class="material-icons-round" style="font-size: 16px;">delete</span>
+                            Delete
+                        </button>
+                    </form>
+                    {% else %}
+                    <div style="text-align: center; width: 100%; color: var(--muted); font-size: 12px; padding: 8px;">
+                        <span class="material-icons-round" style="font-size: 14px; vertical-align: middle;">lock</span> System Default Role
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div style="grid-column: 1/-1; text-align: center; padding: 60px; background: var(--surface); border-radius: var(--radius); border: 2px dashed var(--border);">
+                <span class="material-icons-round" style="font-size: 48px; color: var(--border); margin-bottom: 12px;">security</span>
+                <p style="color: var(--muted); font-size: 15px;">No custom roles defined yet.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="form-card">
+        <div id="formTitle" class="form-title">
+            <span class="material-icons-round" style="color: var(--accent);">add_moderator</span>
+            Create New Role
+        </div>
+        <form id="roleForm" method="POST" action="{% url 'role-management' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" id="formAction" value="create">
+            <input type="hidden" name="role_id" id="formRoleId" value="">
+            
+            <div class="form-group">
+                <label class="form-label">Role Name</label>
+                <input type="text" name="name" id="formName" required class="form-input" placeholder="e.g. Sales Manager">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Assign Permissions</label>
+                <div class="permission-selector">
+                    {% for f in features %}
+                    <label class="permission-item" onclick="togglePermission(this)">
+                        <input type="checkbox" name="features" value="{{ f.id }}">
+                        <div class="permission-info">
+                            <div class="permission-name">{{ f.name }}</div>
+                        </div>
+                        <span class="material-icons-round permission-checked-icon">check_circle</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <button type="submit" class="submit-btn" id="submitBtn">
+                <span class="material-icons-round">check_circle</span>
+                Create Role
+            </button>
+            
+            <button type="button" class="cancel-btn" id="cancelEdit" style="display: none;" onclick="resetForm()">
+                Cancel Edit
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block dashboard_scripts %}
+<script>
+    function togglePermission(label) {
+        const checkbox = label.querySelector('input');
+        // The click event fires twice on labels with inputs, once for label and once for input.
+        // But since we are manually handling, we need to be careful.
+        // Actually, let's just use the checkbox state.
+        setTimeout(() => {
+            if (checkbox.checked) {
+                label.classList.add('selected');
+            } else {
+                label.classList.remove('selected');
+            }
+        }, 10);
+    }
+
+    function editRole(btn) {
+        const card = btn.closest('.role-item-card');
+        const data = card.dataset;
+        const features = JSON.parse(data.features || '[]');
+        
+        document.getElementById('formTitle').innerHTML = '<span class="material-icons-round" style="color: var(--accent);">edit</span> Update Role';
+        document.getElementById('formAction').value = 'update';
+        document.getElementById('formRoleId').value = data.roleId;
+        document.getElementById('formName').value = data.name;
+        
+        // Reset and set checkboxes
+        const checkboxes = document.querySelectorAll('.permission-item input');
+        checkboxes.forEach(cb => {
+            cb.checked = features.includes(cb.value);
+            const label = cb.closest('.permission-item');
+            if (cb.checked) label.classList.add('selected');
+            else label.classList.remove('selected');
+        });
+        
+        document.getElementById('submitBtn').innerHTML = '<span class="material-icons-round">save</span> Update Role';
+        document.getElementById('cancelEdit').style.display = 'block';
+        
+        if (window.innerWidth <= 1024) {
+            document.querySelector('.form-card').scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
+    function resetForm() {
+        document.getElementById('roleForm').reset();
+        document.getElementById('formTitle').innerHTML = '<span class="material-icons-round" style="color: var(--accent);">add_moderator</span> Create New Role';
+        document.getElementById('formAction').value = 'create';
+        document.getElementById('formRoleId').value = '';
+        
+        const labels = document.querySelectorAll('.permission-item');
+        labels.forEach(l => l.classList.remove('selected'));
+        
+        document.getElementById('submitBtn').innerHTML = '<span class="material-icons-round">check_circle</span> Create Role';
+        document.getElementById('cancelEdit').style.display = 'none';
+    }
+</script>
+{% endblock %}
+

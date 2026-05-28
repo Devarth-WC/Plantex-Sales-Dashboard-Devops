@@ -1,0 +1,366 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block page_title %}User Management{% endblock %}
+{% block dashboard_title %}User Management{% endblock %}
+{% block view_type %}user_management{% endblock %}
+
+{% block extra_head_css %}
+    /* Hide sidebar status & refresh on management pages only */
+    .sidebar-status, .sidebar-refresh-btn { 
+        display: none !important; 
+    }
+    .management-container {
+        display: grid;
+        grid-template-columns: 1fr 350px;
+        gap: 24px;
+        align-items: start;
+    }
+    @media (max-width: 1024px) {
+        .management-container {
+            grid-template-columns: 1fr;
+        }
+    }
+    .user-card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+    }
+    .user-item-card {
+        background: var(--surface);
+        backdrop-filter: blur(16px);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius);
+        padding: 20px;
+        position: relative;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: var(--card-shadow);
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .user-item-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--card-shadow-hover);
+        border-color: rgba(79, 70, 229, 0.2);
+    }
+    .user-card-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .user-card-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(79, 70, 229, 0.15), rgba(79, 70, 229, 0.05));
+        border: 1px solid rgba(79, 70, 229, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--accent);
+        box-shadow: 0 4px 10px -2px rgba(0,0,0,0.1);
+    }
+    .user-card-info {
+        flex: 1;
+    }
+    .user-card-name {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--text);
+    }
+    .user-card-email {
+        font-size: 12px;
+        color: var(--muted);
+    }
+    .user-card-role {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--accent);
+    }
+    .user-card-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+        padding-top: 12px;
+        border-top: 1px solid var(--border-light);
+    }
+    .action-btn {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 8px;
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+        text-decoration: none;
+    }
+    .btn-edit {
+        background: var(--surface2);
+        color: var(--text2);
+        border-color: var(--border);
+    }
+    .btn-edit:hover {
+        background: var(--surface3);
+        border-color: var(--accent);
+        color: var(--accent);
+    }
+    .btn-delete {
+        background: var(--danger-soft);
+        color: var(--danger);
+        border-color: rgba(220, 38, 38, 0.1);
+    }
+    .btn-delete:hover {
+        background: var(--danger);
+        color: white;
+    }
+    
+    .form-card {
+        background: var(--surface);
+        backdrop-filter: blur(16px);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius);
+        padding: 24px;
+        box-shadow: var(--card-shadow);
+        position: sticky;
+        top: 84px;
+    }
+    .form-title {
+        font-size: 16px;
+        font-weight: 700;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--text);
+    }
+    .form-group {
+        margin-bottom: 16px;
+    }
+    .form-label {
+        display: block;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--muted);
+        margin-bottom: 6px;
+    }
+    .form-input {
+        width: 100%;
+        padding: 12px 16px;
+        background: rgba(255, 255, 255, 0.4);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        font-family: 'Inter', sans-serif;
+        color: var(--text);
+        outline: none;
+        transition: all 0.25s ease;
+    }
+    .form-input:focus {
+        border-color: var(--accent);
+        background: white;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+    }
+    .submit-btn {
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        color: white;
+        border: none;
+        border-radius: var(--radius-sm);
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 8px;
+    }
+    .submit-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+    }
+    .cancel-btn {
+        width: 100%;
+        padding: 10px;
+        background: none;
+        border: 1px solid var(--border);
+        color: var(--muted);
+        border-radius: var(--radius-sm);
+        font-weight: 500;
+        font-size: 13px;
+        cursor: pointer;
+        margin-top: 10px;
+    }
+    .cancel-btn:hover {
+        background: var(--surface2);
+        color: var(--text2);
+    }
+{% endblock extra_head_css %}
+{% block extra_head_scripts %}{% endblock %}
+
+{% block topbar_filters %}{% endblock %}
+
+{% block dashboard_content %}
+<div class="management-container">
+    <div class="user-list-section">
+        <div class="user-card-grid" id="userList">
+            {% for u in sub_users %}
+            <div class="user-item-card" data-user-id="{{ u.id }}" data-fname="{{ u.fname }}" data-lname="{{ u.lname }}" data-email="{{ u.email }}" data-role="{{ u.role.id|default:'' }}">
+                <div class="user-card-header">
+                    <div class="user-card-avatar">
+                        {{ u.fname|slice:":1" }}{{ u.lname|slice:":1" }}
+                    </div>
+                    <div class="user-card-info">
+                        <div class="user-card-name">{{ u.fname }} {{ u.lname }}</div>
+                        <div class="user-card-email">{{ u.email }}</div>
+                    </div>
+                </div>
+                <div>
+                    <span class="user-card-role">
+                        <span class="material-icons-round" style="font-size: 14px;">verified_user</span>
+                        {{ u.role.name|default:"No Role" }}
+                    </span>
+                </div>
+                <div class="user-card-actions">
+                    <button class="action-btn btn-edit" onclick="editUser(this)">
+                        <span class="material-icons-round" style="font-size: 16px;">edit</span>
+                        Edit
+                    </button>
+                    <form method="POST" action="{% url 'user-management' %}" style="flex: 1; display: flex;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete">
+                        <input type="hidden" name="user_id" value="{{ u.id }}">
+                        <button type="submit" class="action-btn btn-delete" onclick="return confirm('Permanently delete this user account?')">
+                            <span class="material-icons-round" style="font-size: 16px;">delete</span>
+                            Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% empty %}
+            <div style="grid-column: 1/-1; text-align: center; padding: 60px; background: var(--surface); border-radius: var(--radius); border: 2px dashed var(--border);">
+                <span class="material-icons-round" style="font-size: 48px; color: var(--border); margin-bottom: 12px;">group_add</span>
+                <p style="color: var(--muted); font-size: 15px;">No sub-users created yet. Use the form to add one.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Create/Edit Form Area -->
+    <div class="form-card">
+        <div id="formTitle" class="form-title">
+            <span class="material-icons-round" style="color: var(--accent);">person_add</span>
+            Create New User
+        </div>
+        <form id="userForm" method="POST" action="{% url 'user-management' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" id="formAction" value="create">
+            <input type="hidden" name="user_id" id="formUserId" value="">
+            
+            <div class="form-group">
+                <label class="form-label">First Name</label>
+                <input type="text" name="fname" id="formFname" required class="form-input" placeholder="e.g. John">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Last Name</label>
+                <input type="text" name="lname" id="formLname" required class="form-input" placeholder="e.g. Doe">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Email Address</label>
+                <input type="email" name="email" id="formEmail" required class="form-input" placeholder="name@company.com">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Role</label>
+                <select name="role_id" id="formRole" class="form-input">
+                    <option value="">No Special Role</option>
+                    {% for r in roles %}
+                    <option value="{{ r.id }}">{{ r.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" id="pswdLabel">Password</label>
+                <input type="password" name="pswd" id="formPswd" required class="form-input" placeholder="••••••••">
+                <small id="pswdHint" style="display: none; font-size: 10px; color: var(--muted); margin-top: 4px;">Leave blank to keep current password</small>
+            </div>
+            
+            <button type="submit" class="submit-btn" id="submitBtn">
+                <span class="material-icons-round">check_circle</span>
+                Create User
+            </button>
+            
+            <button type="button" class="cancel-btn" id="cancelEdit" style="display: none;" onclick="resetForm()">
+                Cancel Edit
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block dashboard_scripts %}
+<script>
+    function editUser(btn) {
+        const card = btn.closest('.user-item-card');
+        const data = card.dataset;
+        
+        document.getElementById('formTitle').innerHTML = '<span class="material-icons-round" style="color: var(--accent);">edit</span> Update User';
+        document.getElementById('formAction').value = 'update';
+        document.getElementById('formUserId').value = data.userId;
+        document.getElementById('formFname').value = data.fname;
+        document.getElementById('formLname').value = data.lname;
+        document.getElementById('formEmail').value = data.email;
+        document.getElementById('formRole').value = data.role;
+        
+        // When editing, password is optional
+        const pswdInput = document.getElementById('formPswd');
+        pswdInput.required = false;
+        pswdInput.placeholder = 'New password (optional)';
+        document.getElementById('pswdHint').style.display = 'block';
+        
+        document.getElementById('submitBtn').innerHTML = '<span class="material-icons-round">save</span> Update User';
+        document.getElementById('cancelEdit').style.display = 'block';
+        
+        // Scroll to form on mobile
+        if (window.innerWidth <= 1024) {
+            document.querySelector('.form-card').scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
+    function resetForm() {
+        document.getElementById('userForm').reset();
+        document.getElementById('formTitle').innerHTML = '<span class="material-icons-round" style="color: var(--accent);">person_add</span> Create New User';
+        document.getElementById('formAction').value = 'create';
+        document.getElementById('formUserId').value = '';
+        
+        const pswdInput = document.getElementById('formPswd');
+        pswdInput.required = true;
+        pswdInput.placeholder = '••••••••';
+        document.getElementById('pswdHint').style.display = 'none';
+        
+        document.getElementById('submitBtn').innerHTML = '<span class="material-icons-round">check_circle</span> Create User';
+        document.getElementById('cancelEdit').style.display = 'none';
+    }
+</script>
+{% endblock %}
+

@@ -1,0 +1,768 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block page_title %}Upload Data{% endblock %}
+
+{% block dashboard_title %}Data Integration Hub{% endblock %}
+{% block view_type %}upload{% endblock %}
+
+{% block extra_head_css %}
+    /* Hide sidebar status & refresh on the upload page only */
+    .sidebar-status,
+    .sidebar-refresh-btn {
+        display: none !important;
+    }
+
+    /* Hide the topbar filter form on upload — we don't need it here.
+       NOTE: We do NOT use display:none on .topbar-filters directly because
+       that CSS would linger in <head> after HTMX navigation back to a
+       dashboard. Instead we override the block to be empty below. */
+
+    /* Modern Premium Upload Design */
+    .upload-container {
+        max-width: 1300px;
+        margin: 0 auto;
+        padding: 40px 20px 80px;
+        font-family: 'Inter', -apple-system, sans-serif;
+    }
+
+    .upload-header {
+        text-align: center;
+        margin-bottom: 48px;
+    }
+
+    .upload-header h1 {
+        font-size: 32px;
+        font-weight: 800;
+        color: var(--text);
+        margin-bottom: 12px;
+        letter-spacing: -0.5px;
+    }
+
+    .upload-header p {
+        font-size: 15px;
+        color: var(--muted);
+        max-width: 540px;
+        margin: 0 auto;
+        line-height: 1.6;
+    }
+
+    /* Platform Selector */
+    .platform-selector {
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        margin-bottom: 40px;
+    }
+
+    .platform-selector label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 32px;
+        border-radius: 14px;
+        border: 2px solid var(--border);
+        background: var(--surface);
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text2);
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        user-select: none;
+    }
+
+    .platform-selector label:hover {
+        border-color: #94a3b8;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .platform-selector input[type="radio"] {
+        display: none;
+    }
+
+    .platform-selector input[type="radio"]:checked + label {
+        border-color: #3b82f6;
+        background: #eff6ff;
+        color: #2563eb;
+        box-shadow: 0 4px 16px rgba(59, 130, 246, 0.15);
+    }
+
+    .platform-selector .platform-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+    }
+
+    .upload-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 32px;
+    }
+
+    @media (max-width: 1024px) {
+        .upload-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Cards Setup */
+    .upload-card {
+        background: var(--surface);
+        backdrop-filter: blur(16px);
+        border: 1px solid var(--border-light);
+        border-radius: 24px;
+        padding: 36px 40px;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.04), 0 4px 6px -4px rgba(15, 23, 42, 0.02);
+    }
+
+    .upload-card:hover {
+        border-color: rgba(79, 70, 229, 0.2);
+        box-shadow: 0 20px 40px -5px rgba(15, 23, 42, 0.08), 0 10px 15px -5px rgba(15, 23, 42, 0.03);
+        transform: translateY(-4px);
+    }
+
+    .upload-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--accent), var(--accent2));
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .upload-card.flipkart-card::before {
+        background: linear-gradient(90deg, #f8c615, #f59e0b, #e67e22);
+    }
+
+    .upload-card:hover::before {
+        opacity: 1;
+    }
+
+    .upload-card-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 28px;
+    }
+
+    .upload-card-title .material-icons-round {
+        color: #2563eb;
+        background: #eff6ff;
+        padding: 10px;
+        border-radius: 12px;
+        font-size: 22px;
+    }
+
+    .flipkart-card .upload-card-title .material-icons-round {
+        color: #f59e0b;
+        background: #fffbeb;
+    }
+
+    /* Dropzone Styling */
+    .modern-dropzone {
+        border: 2px dashed var(--border);
+        border-radius: 16px;
+        padding: 48px 24px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        background: rgba(255, 255, 255, 0.4);
+        display: block;
+    }
+
+    .modern-dropzone:hover,
+    .modern-dropzone.dragover {
+        border-color: var(--accent);
+        background: rgba(79, 70, 229, 0.03);
+    }
+
+    .modern-dropzone .drop-icon {
+        font-size: 48px;
+        color: #94a3b8;
+        margin-bottom: 16px;
+        transition: all 0.3s;
+    }
+
+    .modern-dropzone:hover .drop-icon {
+        color: #3b82f6;
+        transform: scale(1.05);
+    }
+
+    .modern-dropzone .drop-text {
+        font-size: 17px;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 8px;
+    }
+
+    .modern-dropzone .drop-subtext {
+        font-size: 14px;
+        color: var(--muted);
+    }
+
+    .file-list {
+        margin-top: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .file-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 13px;
+        font-weight: 500;
+        color: #0f172a;
+        transition: all 0.25s ease;
+    }
+
+    .file-item .file-icon {
+        font-size: 20px;
+        color: #94a3b8;
+    }
+
+    .file-item .file-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .file-item .file-name {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-weight: 600;
+        font-size: 13px;
+    }
+
+    .file-item .file-size {
+        font-size: 11px;
+        color: #94a3b8;
+        margin-top: 2px;
+    }
+
+    .file-item .file-progress-bar {
+        height: 4px;
+        background: #e2e8f0;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 6px;
+    }
+
+    .file-item .file-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #3b82f6, #6366f1);
+        border-radius: 4px;
+        width: 0%;
+        transition: width 0.3s ease;
+    }
+
+    .file-item .file-status-icon {
+        font-size: 20px;
+        flex-shrink: 0;
+    }
+
+    .file-item.uploading {
+        border-color: #93c5fd;
+        background: #f0f7ff;
+    }
+
+    .file-item.uploading .file-icon {
+        color: #3b82f6;
+    }
+
+    .file-item.staged {
+        border-color: #86efac;
+        background: #f0fdf4;
+    }
+
+    .file-item.staged .file-icon {
+        color: #22c55e;
+    }
+
+    .file-item.error {
+        border-color: #fca5a5;
+        background: #fef2f2;
+    }
+
+    .file-item.error .file-icon {
+        color: #ef4444;
+    }
+
+    .file-item .file-remove-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #94a3b8;
+        font-size: 18px;
+        padding: 0;
+        line-height: 1;
+        transition: color 0.2s;
+    }
+
+    .file-item .file-remove-btn:hover {
+        color: #ef4444;
+    }
+
+    .staged-count-badge {
+        background: #22c55e;
+        color: white;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 2px 10px;
+        border-radius: 999px;
+        margin-left: 8px;
+    }
+
+    /* Actions */
+    .upload-actions {
+        margin-top: 48px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .upload-log-section {
+        margin-top: 46px;
+    }
+
+    .upload-log-card {
+        background: var(--surface);
+        border: 1px solid var(--border-light);
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
+    }
+
+    .upload-log-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .upload-log-subtitle {
+        font-size: 13px;
+        color: var(--muted);
+        margin-bottom: 16px;
+    }
+
+    .upload-log-table-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--border-light);
+        border-radius: 12px;
+    }
+
+    .upload-log-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+    }
+
+    .upload-log-table th,
+    .upload-log-table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--border-light);
+        font-size: 12px;
+        color: var(--text2);
+        text-align: left;
+        white-space: nowrap;
+    }
+
+    .upload-log-table th {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--muted);
+        background: rgba(148, 163, 184, 0.08);
+    }
+
+    .upload-log-badge {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 3px 8px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: capitalize;
+    }
+
+    .upload-log-badge.queued {
+        color: #1d4ed8;
+        background: #dbeafe;
+    }
+
+    .upload-log-badge.processing {
+        color: #92400e;
+        background: #fef3c7;
+    }
+
+    .upload-log-badge.success {
+        color: #166534;
+        background: #dcfce7;
+    }
+
+    .upload-log-badge.error {
+        color: #991b1b;
+        background: #fee2e2;
+    }
+
+    .btn-process {
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        color: #ffffff;
+        border: none;
+        border-radius: 14px;
+        padding: 18px 48px;
+        font-size: 17px;
+        font-weight: 700;
+        font-family: inherit;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: inline-flex;
+        align-items: center;
+        gap: 14px;
+        box-shadow: 0 8px 20px rgba(79, 70, 229, 0.25);
+    }
+
+    .btn-process:hover:not(:disabled) {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 28px rgba(79, 70, 229, 0.35);
+    }
+
+    .btn-process:disabled {
+        background: #f1f5f9;
+        color: #94a3b8;
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
+    }
+
+    #statusMsg {
+        font-size: 15px;
+        color: #1e293b;
+        background: #ffffff;
+        padding: 14px 28px;
+        border-radius: 10px;
+        border-left: 4px solid #3b82f6;
+        display: block;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        font-weight: 500;
+    }
+
+    #statusMsg:empty {
+        display: none;
+    }
+
+    /* Platform section toggle animation */
+    .platform-section {
+        display: none;
+        animation: fadeInUp 0.35s ease;
+    }
+
+    .platform-section.active {
+        display: block;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(16px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+{% endblock extra_head_css %}
+
+{% block extra_head_scripts %}{% endblock %}
+
+{% block topbar_filters %}{% endblock %}
+
+{% block dashboard_content %}
+<div class="upload-container">
+    <div class="upload-header">
+        <h1>Data Integration Hub</h1>
+        <p>Seamlessly upload your daily sales reports, category mappings, and pricing matrices to power your analytics
+            engine.</p>
+    </div>
+
+    <!-- Platform Selector -->
+    <div class="platform-selector">
+        <input type="radio" name="platform" id="platformAmazon" value="amazon" checked>
+        <label for="platformAmazon">
+            <span class="material-icons-round" style="color: #ff9900;">shopping_cart</span>
+            Amazon
+        </label>
+        <input type="radio" name="platform" id="platformFlipkart" value="flipkart">
+        <label for="platformFlipkart">
+            <span class="material-icons-round" style="color: #f8c615;">storefront</span>
+            Flipkart
+        </label>
+    </div>
+
+    <!-- =============== AMAZON SECTION =============== -->
+    <div id="amazonSection" class="platform-section active">
+        <div class="upload-grid">
+            <!-- Daily Sales Card -->
+            <div class="upload-card">
+                <div class="upload-card-title">
+                    <span class="material-icons-round">analytics</span>
+                    Daily Sales Reports
+                </div>
+                <label class="modern-dropzone" for="csvInput">
+                    <div class="material-icons-round drop-icon">cloud_upload</div>
+                    <div class="drop-text">Drag & drop your daily Sales file here</div>
+                    <div class="drop-subtext">Supported format: DD-MM-YYYY in filename · CSV or Excel accepted</div>
+                    <input type="file" id="csvInput" accept=".csv,.xlsx,.xls" multiple style="display:none">
+                </label>
+                <div id="fileList" class="file-list"></div>
+            </div>
+
+            <!-- Category Mapping Card -->
+            <div class="upload-card">
+                <div class="upload-card-title">
+                    <span class="material-icons-round">account_tree</span>
+                    Category Mapping
+                </div>
+                <label class="modern-dropzone" for="catFile">
+                    <div class="material-icons-round drop-icon">table_chart</div>
+                    <div class="drop-text">Drag & drop Category Excel/CSV here</div>
+                    <div class="drop-subtext">ASIN → Portfolio / Category / Subcategory / Skus</div>
+                    <input type="file" id="catFile" accept=".csv,.xlsx,.xls" multiple style="display:none">
+                </label>
+                <div id="catFileList" class="file-list"></div>
+            </div>
+
+            <!-- Marketing Spends Card -->
+            <div class="upload-card">
+                <div class="upload-card-title">
+                    <span class="material-icons-round">attach_money</span>
+                    Ads Spends
+                </div>
+                <label class="modern-dropzone" for="spendFile">
+                    <div class="material-icons-round drop-icon">campaign</div>
+                    <div class="drop-text">Drag & drop Spends Excel/CSV here</div>
+                    <div class="drop-subtext">Date / Ad Account / Ad Type / ASIN / Spend</div>
+                    <input type="file" id="spendFile" accept=".csv,.xlsx,.xls" multiple style="display:none">
+                </label>
+                <div id="spendFileList" class="file-list"></div>
+            </div>
+
+            <!-- Prices Card -->
+            <div class="upload-card">
+                <div class="upload-card-title">
+                    <span class="material-icons-round">sell</span>
+                    Pricing Data
+                </div>
+                <label class="modern-dropzone" for="priceFile">
+                    <div class="material-icons-round drop-icon">payments</div>
+                    <div class="drop-text">Drag & drop Pricing Excel/CSV here</div>
+                    <div class="drop-subtext">Columns: ASIN, Price</div>
+                    <input type="file" id="priceFile" accept=".csv,.xlsx,.xls" multiple style="display:none">
+                </label>
+                <div id="priceFileList" class="file-list"></div>
+            </div>
+
+            <!-- FBA Stock Card -->
+            <div class="upload-card">
+                <div class="upload-card-title">
+                    <span class="material-icons-round">warehouse</span>
+                    FBA Stock File
+                </div>
+                <label class="modern-dropzone" for="fbaStockFile">
+                    <div class="material-icons-round drop-icon">inventory</div>
+                    <div class="drop-text">Drag & drop FBA Stock file here</div>
+                    <div class="drop-subtext">Required: Date + full FBA stock columns including Ending Warehouse Balance</div>
+                    <input type="file" id="fbaStockFile" accept=".csv,.xlsx,.xls" multiple style="display:none">
+                </label>
+                <div id="fbaStockFileList" class="file-list"></div>
+            </div>
+
+            <!-- Flex Stock Card -->
+            <div class="upload-card">
+                <div class="upload-card-title">
+                    <span class="material-icons-round">local_shipping</span>
+                    Flex Stock File
+                </div>
+                <label class="modern-dropzone" for="flexStockFile">
+                    <div class="material-icons-round drop-icon">inventory_2</div>
+                    <div class="drop-text">Drag & drop Flex Stock file here</div>
+                    <div class="drop-subtext">Required columns: Date / ASIN / Cluster / Qty</div>
+                    <input type="file" id="flexStockFile" accept=".csv,.xlsx,.xls" multiple style="display:none">
+                </label>
+                <div id="flexStockFileList" class="file-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =============== FLIPKART SECTION =============== -->
+    <div id="flipkartSection" class="platform-section">
+        <div class="upload-grid">
+            <!-- FK Search Traffic Card -->
+            <div class="upload-card flipkart-card">
+                <div class="upload-card-title">
+                    <span class="material-icons-round">search</span>
+                    Search Traffic Report
+                </div>
+                <label class="modern-dropzone" for="fkSearchTrafficFile">
+                    <div class="material-icons-round drop-icon">cloud_upload</div>
+                    <div class="drop-text">Drag & drop Search Traffic Report here</div>
+                    <div class="drop-subtext">Listing Id / SKU / Vertical / Impressions / Sales (CSV/Excel)</div>
+                    <input type="file" id="fkSearchTrafficFile" accept=".csv,.xlsx,.xls" multiple style="display:none">
+                </label>
+                <div id="fkSearchTrafficFileList" class="file-list"></div>
+            </div>
+
+            <!-- FK Category Card -->
+            <div class="upload-card flipkart-card">
+                <div class="upload-card-title">
+                    <span class="material-icons-round">account_tree</span>
+                    Category Report
+                </div>
+                <label class="modern-dropzone" for="fkCategoryFile">
+                    <div class="material-icons-round drop-icon">table_chart</div>
+                    <div class="drop-text">Drag & drop Category Dashboard file here</div>
+                    <div class="drop-subtext">FSN ID / Portfolio / Category / Sub Category / Product Status (.xlsx/.csv)</div>
+                    <input type="file" id="fkCategoryFile" accept=".csv,.xlsx,.xls" multiple style="display:none">
+                </label>
+                <div id="fkCategoryFileList" class="file-list"></div>
+            </div>
+
+            <!-- FK Price Card -->
+            <div class="upload-card flipkart-card">
+                <div class="upload-card-title">
+                    <span class="material-icons-round">sell</span>
+                    Price Report
+                </div>
+                <label class="modern-dropzone" for="fkPriceFile">
+                    <div class="material-icons-round drop-icon">payments</div>
+                    <div class="drop-text">Drag & drop FK Price file here</div>
+                    <div class="drop-subtext">Flipkart Serial Number / Deal (CSV/Excel)</div>
+                    <input type="file" id="fkPriceFile" accept=".csv,.xlsx,.xls" multiple style="display:none">
+                </label>
+                <div id="fkPriceFileList" class="file-list"></div>
+            </div>
+
+            <!-- FK PLA Card -->
+            <div class="upload-card flipkart-card">
+                <div class="upload-card-title">
+                    <span class="material-icons-round">trending_up</span>
+                    PLA Report
+                </div>
+                <label class="modern-dropzone" for="fkPlaNewFile">
+                    <div class="material-icons-round drop-icon">cloud_upload</div>
+                    <div class="drop-text">Drag & drop PLA FSN Report here</div>
+                    <div class="drop-subtext">Campaign ID / FSN ID / Ad Spend (CSV/Excel)</div>
+                    <input type="file" id="fkPlaNewFile" accept=".csv,.xlsx,.xls" multiple style="display:none">
+                </label>
+                <div id="fkPlaNewFileList" class="file-list"></div>
+            </div>
+
+            <!-- FK FBA Stock Card -->
+            <div class="upload-card flipkart-card">
+                <div class="upload-card-title">
+                    <span class="material-icons-round">warehouse</span>
+                    FK FBA Stock File
+                </div>
+                <label class="modern-dropzone" for="fkFbaStockFile">
+                    <div class="material-icons-round drop-icon">inventory</div>
+                    <div class="drop-text">Drag & drop FK FBA stock file here</div>
+                    <div class="drop-subtext">Required columns: Date (DD-MM-YYYY), FSN, Live on Website</div>
+                    <input type="file" id="fkFbaStockFile" accept=".csv,.xlsx,.xls" multiple style="display:none">
+                </label>
+                <div id="fkFbaStockFileList" class="file-list"></div>
+            </div>
+
+            <!-- FK Inventory File Card -->
+            <div class="upload-card flipkart-card">
+                <div class="upload-card-title">
+                    <span class="material-icons-round">inventory</span>
+                    FK Inventory File
+                </div>
+                <label class="modern-dropzone" for="fkInventoryFile">
+                    <div class="material-icons-round drop-icon">cloud_upload</div>
+                    <div class="drop-text">Drag & drop FK Inventory file here</div>
+                    <div class="drop-subtext">Required columns: PRODUCTS STATUS / PRODUCTS TYPE / SKU / FSN / Qty</div>
+                    <input type="file" id="fkInventoryFile" accept=".csv,.xlsx,.xls" multiple style="display:none">
+                </label>
+                <div id="fkInventoryFileList" class="file-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="upload-actions">
+        <button id="loadBtn" class="btn-process" onclick="processAndUpload()" disabled>
+            <span class="material-icons-round">auto_awesome</span>
+            Process Data & Update Dashboard
+            <span id="stagedCountBadge" class="staged-count-badge" style="display:none;"></span>
+        </button>
+        <div id="statusMsg"></div>
+    </div>
+
+    <div class="upload-log-section">
+        <div class="upload-log-card">
+            <div class="upload-log-title">
+                <span class="material-icons-round">history</span>
+                Upload Log Notes
+            </div>
+            <div class="upload-log-subtitle">
+                System-generated upload history (read-only).
+            </div>
+            <div class="upload-log-table-wrap">
+                <table class="upload-log-table">
+                    <thead>
+                        <tr>
+                            <th>File Name</th>
+                            <th>Upload Type</th>
+                            <th>Upload Date & Time</th>
+                            <th>Uploaded By</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in upload_logs %}
+                        <tr>
+                            <td>{{ log.file_name }}</td>
+                            <td>{{ log.upload_type }}</td>
+                            <td>{{ log.created_at|date:"d M Y, h:i A" }}</td>
+                            <td>{{ log.uploaded_by.fname }} {{ log.uploaded_by.lname }}</td>
+                            <td><span class="upload-log-badge {{ log.status }}">{{ log.status }}</span></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" style="text-align:center;color:var(--muted);padding:20px;">No upload logs yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {% csrf_token %}
+</div>
+{% endblock %}
+
+{% block dashboard_scripts %}
+<script>
+window.UPLOAD_TASK_TIMEOUT_MS = {{ upload_task_timeout_ms|default:1800000 }};
+</script>
+<script src="/static/js/upload.js?v=16"></script>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% load dashboard_extras %}
+{% for item in rows %}
+<tr>
+    <td>{{ item.date|date:"d M Y" }}</td>
+    <td>
+        <div class="ceo-sku-cell">
+            <div class="ceo-sku-thumb">📦</div>
+            <span>{{ item.sku }}</span>
+        </div>
+    </td>
+    <td>{{ item.category }}</td>
+    <td class="num">{{ item.stock_qty|fmt_num }}</td>
+    <td class="num">{{ item.sale_qty|fmt_num }}</td>
+    <td class="num" style="font-weight:600;">{{ item.doc }}</td>
+    <td class="num">{{ item.revenue|fmt_rupee }}</td>
+    <td>
+        <span class="ceo-inv-value {{ item.status_class }}"
+            style="padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">
+            {{ item.status }}
+        </span>
+    </td>
+    <td style="font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace;">
+        {{ item.reason|safe }}
+    </td>
+</tr>
+{% empty %}
+<tr>
+    <td colspan="9" class="empty">No inventory data available</td>
+</tr>
+{% endfor %}

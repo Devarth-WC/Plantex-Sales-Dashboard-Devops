@@ -1,0 +1,15 @@
+{% load dashboard_extras %}
+{% for cl in rows %}
+<tr>
+    <td style="font-weight:600;">{{ cl.cluster }}</td>
+    <td class="num" data-order="{{ cl.revenue|default:0 }}">{{ cl.revenue|fmt_rupee }}</td>
+    <td class="num {% if cl.growth >= 0 %}growth-up{% else %}growth-down{% endif %}" data-order="{{ cl.growth|default:0 }}">
+        {% if cl.growth >= 0 %}▲{% else %}▼{% endif %} {{ cl.growth|abs_val }}%
+    </td>
+    <td class="num" data-order="{{ cl.contribution|default:0 }}">{{ cl.contribution }}%</td>
+</tr>
+{% empty %}
+<tr>
+    <td colspan="4" class="empty">No data available</td>
+</tr>
+{% endfor %}

@@ -1,0 +1,15 @@
+{% load dashboard_extras %}
+{% for cat in rows %}
+<tr>
+    <td style="font-weight:600;">{{ cat.category }}</td>
+    <td class="num" data-order="{{ cat.revenue|default:0 }}">{{ cat.revenue|fmt_rupee }}</td>
+    <td class="num {% if cat.growth >= 0 %}growth-up{% else %}growth-down{% endif %}" data-order="{{ cat.growth|default:0 }}">
+        {% if cat.growth >= 0 %}▲{% else %}▼{% endif %} {{ cat.growth|abs_val }}%
+    </td>
+    <td class="num" data-order="{{ cat.contribution|default:0 }}">{{ cat.contribution }}%</td>
+</tr>
+{% empty %}
+<tr>
+    <td colspan="4" class="empty">No data available</td>
+</tr>
+{% endfor %}

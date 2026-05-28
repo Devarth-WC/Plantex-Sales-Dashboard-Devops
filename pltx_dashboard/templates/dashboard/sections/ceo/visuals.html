@@ -1,0 +1,245 @@
+{% load dashboard_extras static %}
+<!-- ════════════ ROW 3: Sales Trend | Platform Split ════════════ -->
+<div class="ceo-row-2-cols">
+    <!-- Sales Trend -->
+    <div class="ceo-card" id="card-sales-trend">
+        <div class="ceo-card-header">
+            <span class="ceo-card-title">Sales Trend</span>
+            <div class="ceo-trend-filters">
+                <button class="ceo-trend-tab active" data-period="daily" id="btn-daily">Daily</button>
+                <button class="ceo-trend-tab" data-period="weekly" id="btn-weekly">Weekly</button>
+                <button class="ceo-trend-tab" data-period="monthly" id="btn-monthly">Monthly</button>
+                <span class="material-icons-round"
+                    style="font-size:18px;color:var(--muted);cursor:pointer;margin-left:4px">bar_chart</span>
+            </div>
+        </div>
+        <div class="ceo-trend-legend">
+            <div class="ceo-trend-legend-item">
+                <div class="ceo-legend-line solid"></div>
+                <span>This Period</span>
+            </div>
+            <div class="ceo-trend-legend-item">
+                <div class="ceo-legend-line dashed"></div>
+                <span>Last Period</span>
+            </div>
+        </div>
+        <div class="ceo-card-body">
+            <div class="ceo-chart-wrap"><canvas id="salesTrendChart"></canvas></div>
+        </div>
+    </div>
+
+    <!-- Platform Split -->
+    <div class="ceo-card" id="card-platform-split">
+        <div class="ceo-card-header">
+            <span class="ceo-card-title">Platform Split</span>
+        </div>
+        <div class="ceo-card-body">
+            <div class="ceo-donut-container">
+                <div class="ceo-donut-wrap">
+                    <canvas id="platformSplitChart"></canvas>
+                    <div class="ceo-donut-center">
+                        <div class="ceo-donut-center-value">{{ payload.kpis.revenue|fmt_rupee }}</div>
+                        <div class="ceo-donut-center-label">Total Revenue</div>
+                    </div>
+                </div>
+                <div class="ceo-platform-legend" id="platformLegend">
+                    {% for name, data in payload.platforms.items %}
+                    <div class="ceo-platform-item">
+                        <img
+                            src="{% if name == 'Amazon' %}{% static 'logo/amazon_logo.png' %}{% else %}{% static 'logo/flipkart_logo.png' %}{% endif %}"
+                            alt="{{ name }}"
+                            class="ceo-platform-logo">
+                        <span class="ceo-platform-name">{{ name }}</span>
+                        <span class="ceo-platform-pct">{{ data.pct }}%</span>
+                        <span class="ceo-platform-rev">{{ data.revenue|fmt_rupee }}</span>
+                        <span class="ceo-platform-growth {% if data.growth >= 0 %}up{% else %}down{% endif %}">
+                            ({% if data.growth >= 0 %}▲{% else %}▼{% endif %}{{ data.growth|abs_val }}%)
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ════════════ ROW 4: Top Revenue Contributors | Declining Products | Inventory Health ════════════ -->
+<div class="ceo-row-3">
+    <!-- Top Revenue Contributors -->
+    <div class="ceo-card" id="card-winning">
+        <div class="ceo-card-header">
+            <span class="ceo-card-title">Top Revenue Contributors</span>
+            <button class="ceo-view-all-btn" onclick="openModal('winningModal')" id="btn-winning-view-all">View
+                All</button>
+        </div>
+        <div class="ceo-card-body no-pad">
+            <table class="ceo-table">
+                <thead>
+                    <tr>
+                        <th>SKU</th>
+                        <th class="num">Revenue</th>
+                        <th class="num">MOM Growth</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% include "dashboard/partials/product_cards/top_products_simple_rows.html" with rows=payload.cat_top_products %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Declining Products -->
+    <div class="ceo-card" id="card-declining">
+        <div class="ceo-card-header">
+            <span class="ceo-card-title">Declining Products (MOM)</span>
+            <button class="ceo-view-all-btn" onclick="openModal('decliningModal')" id="btn-declining-view-all">View
+                All</button>
+        </div>
+        <div class="ceo-card-body no-pad">
+            <table class="ceo-table">
+                <thead>
+                    <tr>
+                        <th>SKU</th>
+                        <th class="num">MOM Drop %</th>
+                        <th class="num">Impact (₹)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% include "dashboard/partials/product_cards/declining_products_rows.html" with rows=payload.cat_under_products %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Inventory Health -->
+    <div class="ceo-card" id="card-inventory">
+        <div class="ceo-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="ceo-card-title">Inventory Health</span>
+            <button class="ceo-view-all-btn" onclick="openModal('inventoryHealthModal')">View Details</button>
+        </div>
+        <div class="ceo-card-body">
+            {% if payload.inventory.is_fk_inventory %}
+            <div class="ceo-inv-grid" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="ceo-inv-card">
+                    <div class="ceo-inv-icon danger">⚠</div>
+                    <div class="ceo-inv-label">Nearly OOS</div>
+                    <div class="ceo-inv-value danger">{{ payload.inventory.nearly_oos }} Rows</div>
+                </div>
+                <div class="ceo-inv-card">
+                    <div class="ceo-inv-icon warn">!</div>
+                    <div class="ceo-inv-label">Understock</div>
+                    <div class="ceo-inv-value warn">{{ payload.inventory.understock }} Rows</div>
+                </div>
+                <div class="ceo-inv-card">
+                    <div class="ceo-inv-icon good">✓</div>
+                    <div class="ceo-inv-label">Ideal</div>
+                    <div class="ceo-inv-value good">{{ payload.inventory.ideal }} Rows</div>
+                </div>
+                <div class="ceo-inv-card">
+                    <div class="ceo-inv-icon neutral">⬆</div>
+                    <div class="ceo-inv-label">Over Stock</div>
+                    <div class="ceo-inv-value neutral">{{ payload.inventory.fk_overstock }} Rows</div>
+                </div>
+                <div class="ceo-inv-card">
+                    <div class="ceo-inv-icon neutral">⬆⬆</div>
+                    <div class="ceo-inv-label">Highly Over Stock</div>
+                    <div class="ceo-inv-value neutral">{{ payload.inventory.highly_overstock }} Rows</div>
+                </div>
+                <div class="ceo-inv-card">
+                    <div class="ceo-inv-icon" style="color:var(--muted);">✕</div>
+                    <div class="ceo-inv-label">Not Selling</div>
+                    <div class="ceo-inv-value" style="color:var(--muted);">{{ payload.inventory.not_selling }} Rows</div>
+                </div>
+            </div>
+            {% else %}
+            <div class="ceo-inv-grid">
+                <div class="ceo-inv-card">
+                    <div class="ceo-inv-icon good">✓</div>
+                    <div class="ceo-inv-label">In Stock</div>
+                    <div class="ceo-inv-value good">{{ payload.inventory.in_stock }} Rows</div>
+                </div>
+                <div class="ceo-inv-card">
+                    <div class="ceo-inv-icon warn">!</div>
+                    <div class="ceo-inv-label">Low Stock</div>
+                    <div class="ceo-inv-value warn">{{ payload.inventory.low_stock }} Rows</div>
+                </div>
+                <div class="ceo-inv-card">
+                    <div class="ceo-inv-icon danger">✕</div>
+                    <div class="ceo-inv-label">OOS</div>
+                    <div class="ceo-inv-value danger">{{ payload.inventory.oos }} Rows</div>
+                </div>
+                <div class="ceo-inv-card">
+                    <div class="ceo-inv-icon neutral">⬆</div>
+                    <div class="ceo-inv-label">Overstock</div>
+                    <div class="ceo-inv-value neutral">{{ payload.inventory.overstock }} Rows</div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- ════════════ ROW 5: Revenue Forecast | Today's Priorities ════════════ -->
+<div class="ceo-row-5">
+    <!-- Revenue Forecast -->
+    <div class="ceo-card" id="card-forecast">
+        <div class="ceo-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span class="ceo-card-title">Revenue Forecast</span>
+                <button class="ceo-view-all-btn" onclick="openModal('forecastDetailsModal')">View Details</button>
+            </div>
+            <div class="ceo-trend-legend" style="padding:0;margin:0;">
+                <div class="ceo-trend-legend-item">
+                    <div class="ceo-legend-line solid"></div><span>Actual</span>
+                </div>
+                <div class="ceo-trend-legend-item">
+                    <div class="ceo-legend-line dashed" style="border-color:var(--success);"></div><span>Forecast</span>
+                </div>
+                <div class="ceo-trend-legend-item">
+                    <div class="ceo-legend-line dashed" style="border-color:var(--muted);"></div><span>Target</span>
+                </div>
+            </div>
+        </div>
+        <div class="ceo-card-body" style="display:flex;gap:20px;padding:12px 20px;">
+            <div class="ceo-forecast-info" style="padding:0;min-width:180px;">
+                <div class="ceo-forecast-predicted">Predicted Revenue (Month End)</div>
+                <div class="ceo-forecast-value">{{ payload.forecast.predicted|fmt_rupee }}</div>
+                <div class="ceo-forecast-meta">
+                    <div class="ceo-forecast-box target">
+                        <span>Target</span>
+                        <strong>{{ payload.forecast.target|fmt_rupee }}</strong>
+                    </div>
+                    <div class="ceo-forecast-box gap">
+                        <span>Gap</span>
+                        <strong>{{ payload.forecast.gap|fmt_rupee }} ({{ payload.forecast.gap_pct }}%)</strong>
+                    </div>
+                </div>
+            </div>
+            <div style="flex:1;position:relative;min-height:220px;">
+                <canvas id="forecastChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Today's Priorities -->
+    <div class="ceo-card" id="card-priorities">
+        <div class="ceo-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="ceo-card-title">Today's Priorities</span>
+            <button class="ceo-view-all-btn" onclick="openModal('priorityDetailsModal')">View Details</button>
+        </div>
+        <div class="ceo-priority-list">
+            {% for task in payload.priorities %}
+            <div class="ceo-priority-item">
+                <div class="ceo-priority-rank">{{ task.rank }}</div>
+                <div class="ceo-priority-content">
+                    <div class="ceo-priority-title">{{ task.title }}</div>
+                    <div class="ceo-priority-subtitle">{{ task.subtitle }}</div>
+                </div>
+                <span class="ceo-priority-badge {% if task.priority == 'High' %}high{% elif task.priority == 'Medium' %}medium{% else %}low{% endif %}">{{ task.priority }}</span>
+                <span class="ceo-priority-arrow">›</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>

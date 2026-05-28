@@ -1,0 +1,414 @@
+{% load dashboard_extras static %}
+<div class="kpi-grid-v2">
+    <div class="ceo-kpi-card" id="biz-kpi-revenue">
+        <div class="ceo-kpi-header">
+            <span class="ceo-kpi-label">Total Revenue</span>
+            <div class="ceo-kpi-icon blue"><span class="material-icons-round" style="font-size:16px">trending_up</span></div>
+        </div>
+        <div class="ceo-kpi-value">{{ payload.kpis.revenue|fmt_rupee }}</div>
+        <div class="ceo-kpi-platform-split">
+            {% if payload.kpis.az_revenue or request.GET.platform != 'Flipkart' %}
+            <div class="ceo-kpi-platform-row">
+                <span class="ceo-kpi-platform-brand">
+                    <img src="{% static 'logo/amazon_logo.png' %}" alt="Amazon" class="ceo-platform-logo">
+                    <strong>Amazon</strong>
+                </span>
+                <span class="ceo-kpi-platform-value {% if payload.kpis.az_revenue >= 0 %}up{% else %}down{% endif %}">{{ payload.kpis.az_revenue|fmt_rupee }}</span>
+            </div>
+            {% endif %}
+            {% if payload.kpis.fk_revenue or request.GET.platform != 'Amazon' %}
+            <div class="ceo-kpi-platform-row">
+                <span class="ceo-kpi-platform-brand">
+                    <img src="{% static 'logo/flipkart_logo.png' %}" alt="Flipkart" class="ceo-platform-logo">
+                    <strong>Flipkart</strong>
+                </span>
+                <span class="ceo-kpi-platform-value {% if payload.kpis.fk_revenue >= 0 %}up{% else %}down{% endif %}">{{ payload.kpis.fk_revenue|fmt_rupee }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="ceo-kpi-card" id="biz-kpi-mom">
+        <div class="ceo-kpi-header">
+            <span class="ceo-kpi-label">{% if not request.GET.platform %}Combined MOM Growth{% else %}MOM Growth{% endif %}</span>
+            <div class="ceo-kpi-icon green"><span class="material-icons-round" style="font-size:16px">show_chart</span></div>
+        </div>
+        <div class="ceo-kpi-value {% if payload.kpis.mom_growth >= 0 %}accent-green{% else %}accent-red{% endif %}">{% if payload.kpis.mom_growth >= 0 %}▲{% else %}▼{% endif %} {{ payload.kpis.mom_growth|abs_val|floatformat:1 }}%</div>
+        <div class="ceo-kpi-window-grid">
+            <div class="ceo-kpi-window-item">
+                <span class="ceo-kpi-window-label">Current Month</span>
+                <span class="ceo-kpi-window-value">{{ payload.kpis.mom_current_revenue|fmt_rupee }}</span>
+            </div>
+            <div class="ceo-kpi-window-item">
+                <span class="ceo-kpi-window-label">Previous Month</span>
+                <span class="ceo-kpi-window-value">{{ payload.kpis.mom_previous_revenue|fmt_rupee }}</span>
+            </div>
+        </div>
+        {% if not request.GET.platform %}
+        <div class="ceo-kpi-platform-split breakdown-boxes">
+            <div class="ceo-kpi-platform-row">
+                <span class="ceo-kpi-platform-meta">
+                    <span class="ceo-kpi-platform-brand">
+                        <img src="{% static 'logo/amazon_logo.png' %}" alt="Amazon" class="ceo-platform-logo">
+                        <strong>Amazon</strong>
+                    </span>
+                    <span class="ceo-kpi-platform-note">Current month vs previous month</span>
+                </span>
+                <span class="ceo-kpi-platform-trend">
+                    <span class="ceo-kpi-platform-value {% if payload.kpis.az_mom_growth >= 0 %}up{% else %}down{% endif %}">{% if payload.kpis.az_mom_growth >= 0 %}▲{% else %}▼{% endif %} {{ payload.kpis.az_mom_growth|abs_val|floatformat:1 }}%</span>
+                    <span class="ceo-kpi-platform-periods">{{ payload.kpis.az_mom_current_revenue|fmt_rupee }} vs {{ payload.kpis.az_mom_previous_revenue|fmt_rupee }}</span>
+                </span>
+            </div>
+            <div class="ceo-kpi-platform-row">
+                <span class="ceo-kpi-platform-meta">
+                    <span class="ceo-kpi-platform-brand">
+                        <img src="{% static 'logo/flipkart_logo.png' %}" alt="Flipkart" class="ceo-platform-logo">
+                        <strong>Flipkart</strong>
+                    </span>
+                    <span class="ceo-kpi-platform-note">Current month vs previous month</span>
+                </span>
+                <span class="ceo-kpi-platform-trend">
+                    <span class="ceo-kpi-platform-value {% if payload.kpis.fk_mom_growth >= 0 %}up{% else %}down{% endif %}">{% if payload.kpis.fk_mom_growth >= 0 %}▲{% else %}▼{% endif %} {{ payload.kpis.fk_mom_growth|abs_val|floatformat:1 }}%</span>
+                    <span class="ceo-kpi-platform-periods">{{ payload.kpis.fk_mom_current_revenue|fmt_rupee }} vs {{ payload.kpis.fk_mom_previous_revenue|fmt_rupee }}</span>
+                </span>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="ceo-kpi-card" id="biz-kpi-yoy">
+        <div class="ceo-kpi-header">
+            <span class="ceo-kpi-label">{% if not request.GET.platform %}Combined YOY Growth{% else %}YOY Growth{% endif %}</span>
+            <div class="ceo-kpi-icon green"><span class="material-icons-round" style="font-size:16px">stacked_line_chart</span></div>
+        </div>
+        <div class="ceo-kpi-value {% if payload.kpis.yoy_growth >= 0 %}accent-green{% else %}accent-red{% endif %}">{% if payload.kpis.yoy_growth >= 0 %}▲{% else %}▼{% endif %} {{ payload.kpis.yoy_growth|abs_val|floatformat:1 }}%</div>
+        <div class="ceo-kpi-window-grid">
+            <div class="ceo-kpi-window-item">
+                <span class="ceo-kpi-window-label">Current Year</span>
+                <span class="ceo-kpi-window-value">{{ payload.kpis.yoy_current_revenue|fmt_rupee }}</span>
+            </div>
+            <div class="ceo-kpi-window-item">
+                <span class="ceo-kpi-window-label">Previous Year</span>
+                <span class="ceo-kpi-window-value">{{ payload.kpis.yoy_previous_revenue|fmt_rupee }}</span>
+            </div>
+        </div>
+        {% if not request.GET.platform %}
+        <div class="ceo-kpi-platform-split breakdown-boxes">
+            <div class="ceo-kpi-platform-row">
+                <span class="ceo-kpi-platform-meta">
+                    <span class="ceo-kpi-platform-brand">
+                        <img src="{% static 'logo/amazon_logo.png' %}" alt="Amazon" class="ceo-platform-logo">
+                        <strong>Amazon</strong>
+                    </span>
+                    <span class="ceo-kpi-platform-note">Current year vs previous year</span>
+                </span>
+                <span class="ceo-kpi-platform-trend">
+                    <span class="ceo-kpi-platform-value {% if payload.kpis.az_yoy_growth >= 0 %}up{% else %}down{% endif %}">{% if payload.kpis.az_yoy_growth >= 0 %}▲{% else %}▼{% endif %} {{ payload.kpis.az_yoy_growth|abs_val|floatformat:1 }}%</span>
+                    <span class="ceo-kpi-platform-periods">{{ payload.kpis.az_yoy_current_revenue|fmt_rupee }} vs {{ payload.kpis.az_yoy_previous_revenue|fmt_rupee }}</span>
+                </span>
+            </div>
+            <div class="ceo-kpi-platform-row">
+                <span class="ceo-kpi-platform-meta">
+                    <span class="ceo-kpi-platform-brand">
+                        <img src="{% static 'logo/flipkart_logo.png' %}" alt="Flipkart" class="ceo-platform-logo">
+                        <strong>Flipkart</strong>
+                    </span>
+                    <span class="ceo-kpi-platform-note">Current year vs previous year</span>
+                </span>
+                <span class="ceo-kpi-platform-trend">
+                    <span class="ceo-kpi-platform-value {% if payload.kpis.fk_yoy_growth >= 0 %}up{% else %}down{% endif %}">{% if payload.kpis.fk_yoy_growth >= 0 %}▲{% else %}▼{% endif %} {{ payload.kpis.fk_yoy_growth|abs_val|floatformat:1 }}%</span>
+                    <span class="ceo-kpi-platform-periods">{{ payload.kpis.fk_yoy_current_revenue|fmt_rupee }} vs {{ payload.kpis.fk_yoy_previous_revenue|fmt_rupee }}</span>
+                </span>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if request.GET.platform != 'Flipkart' %}
+    <div class="ceo-kpi-card" id="biz-kpi-orders">
+        <div class="ceo-kpi-header">
+            <span class="ceo-kpi-label">Amazon Orders</span>
+            <div class="ceo-kpi-icon cyan"><span class="material-icons-round" style="font-size:16px">shopping_cart</span></div>
+        </div>
+        <div class="ceo-kpi-value">{{ payload.kpis.az_orders|fmt_num }}</div>
+        <div class="ceo-kpi-window-grid">
+            <div class="ceo-kpi-window-item">
+                <span class="ceo-kpi-window-label">Current Month</span>
+                <span class="ceo-kpi-window-value">{{ payload.kpis.mom_current_orders|fmt_num }}</span>
+            </div>
+            <div class="ceo-kpi-window-item">
+                <span class="ceo-kpi-window-label">Previous Month</span>
+                <span class="ceo-kpi-window-value">{{ payload.kpis.mom_previous_orders|fmt_num }}</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="ceo-kpi-card" id="biz-kpi-units">
+        <div class="ceo-kpi-header">
+            <span class="ceo-kpi-label">Units Sold</span>
+            <div class="ceo-kpi-icon blue"><span class="material-icons-round" style="font-size:16px">inventory_2</span></div>
+        </div>
+        <div class="ceo-kpi-value">{{ payload.kpis.units|fmt_num }}</div>
+        <div class="ceo-kpi-window-grid">
+            <div class="ceo-kpi-window-item">
+                <span class="ceo-kpi-window-label">Current Month</span>
+                <span class="ceo-kpi-window-value">{{ payload.kpis.mom_current_units|fmt_num }}</span>
+            </div>
+            <div class="ceo-kpi-window-item">
+                <span class="ceo-kpi-window-label">Previous Month</span>
+                <span class="ceo-kpi-window-value">{{ payload.kpis.mom_previous_units|fmt_num }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="ceo-kpi-card" id="biz-kpi-adspend">
+        <div class="ceo-kpi-header">
+            <span class="ceo-kpi-label">Ad Spend</span>
+            <div class="ceo-kpi-icon amber"><span class="material-icons-round" style="font-size:16px">payments</span></div>
+        </div>
+        <div class="ceo-kpi-value">{{ payload.marketing.ad_spend|fmt_rupee }}</div>
+        <div class="ceo-kpi-change {% if payload.marketing.ad_spend_change < 0 %}down{% else %}up{% endif %}">
+            {% if payload.marketing.ad_spend_change < 0 %}▼{% else %}▲{% endif %} {{ payload.marketing.ad_spend_change|abs_val }}% <span class="sub">vs last month</span>
+        </div>
+        <div class="ceo-kpi-platform-split">
+            {% if payload.kpis.az_spend or request.GET.platform != 'Flipkart' %}
+            <div class="ceo-kpi-platform-row">
+                <span class="ceo-kpi-platform-brand">
+                    <img src="{% static 'logo/amazon_logo.png' %}" alt="Amazon" class="ceo-platform-logo">
+                    <strong>Amazon</strong>
+                </span>
+                <span class="ceo-kpi-platform-value {% if payload.kpis.az_spend >= 0 %}up{% else %}down{% endif %}">{{ payload.kpis.az_spend|fmt_rupee }}</span>
+            </div>
+            {% endif %}
+            {% if payload.kpis.fk_spend or request.GET.platform != 'Amazon' %}
+            <div class="ceo-kpi-platform-row">
+                <span class="ceo-kpi-platform-brand">
+                    <img src="{% static 'logo/flipkart_logo.png' %}" alt="Flipkart" class="ceo-platform-logo">
+                    <strong>Flipkart</strong>
+                </span>
+                <span class="ceo-kpi-platform-value {% if payload.kpis.fk_spend >= 0 %}up{% else %}down{% endif %}">{{ payload.kpis.fk_spend|fmt_rupee }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="ceo-kpi-card" id="biz-kpi-tacos">
+        <div class="ceo-kpi-header">
+            <span class="ceo-kpi-label">TACOS</span>
+            <div class="ceo-kpi-icon cyan"><span class="material-icons-round" style="font-size:16px">donut_small</span></div>
+        </div>
+        <div class="ceo-kpi-value">{{ payload.kpis.tacos|floatformat:1 }}%</div>
+        <div class="ceo-kpi-window-grid">
+            <div class="ceo-kpi-window-item">
+                <span class="ceo-kpi-window-label">Current Month</span>
+                <span class="ceo-kpi-window-value">{{ payload.kpis.mom_current_tacos|floatformat:1 }}%</span>
+            </div>
+            <div class="ceo-kpi-window-item">
+                <span class="ceo-kpi-window-label">Previous Month</span>
+                <span class="ceo-kpi-window-value">{{ payload.kpis.mom_previous_tacos|floatformat:1 }}%</span>
+            </div>
+        </div>
+        <div class="ceo-kpi-platform-split">
+            {% if payload.marketing.az_tacos or request.GET.platform != 'Flipkart' %}
+            <div class="ceo-kpi-platform-row">
+                <span class="ceo-kpi-platform-brand">
+                    <img src="{% static 'logo/amazon_logo.png' %}" alt="Amazon" class="ceo-platform-logo">
+                    <strong>Amazon</strong>
+                </span>
+                <span class="ceo-kpi-platform-value {% if payload.marketing.az_tacos >= 0 %}up{% else %}down{% endif %}">{{ payload.marketing.az_tacos|floatformat:1 }}%</span>
+            </div>
+            {% endif %}
+            {% if payload.marketing.fk_tacos or request.GET.platform != 'Amazon' %}
+            <div class="ceo-kpi-platform-row">
+                <span class="ceo-kpi-platform-brand">
+                    <img src="{% static 'logo/flipkart_logo.png' %}" alt="Flipkart" class="ceo-platform-logo">
+                    <strong>Flipkart</strong>
+                </span>
+                <span class="ceo-kpi-platform-value {% if payload.marketing.fk_tacos >= 0 %}up{% else %}down{% endif %}">{{ payload.marketing.fk_tacos|floatformat:1 }}%</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="ceo-kpi-card" id="biz-kpi-roas">
+        <div class="ceo-kpi-header">
+            <span class="ceo-kpi-label">ROAS</span>
+            <div class="ceo-kpi-icon blue"><span class="material-icons-round" style="font-size:16px">speed</span></div>
+        </div>
+        <div class="ceo-kpi-value">{{ payload.marketing.roas }}x</div>
+        <div class="ceo-kpi-window-grid">
+            <div class="ceo-kpi-window-item">
+                <span class="ceo-kpi-window-label">Current Month</span>
+                <span class="ceo-kpi-window-value">{{ payload.kpis.mom_current_roas|floatformat:2 }}x</span>
+            </div>
+            <div class="ceo-kpi-window-item">
+                <span class="ceo-kpi-window-label">Previous Month</span>
+                <span class="ceo-kpi-window-value">{{ payload.kpis.mom_previous_roas|floatformat:2 }}x</span>
+            </div>
+        </div>
+        <div class="ceo-kpi-platform-split">
+            {% if payload.marketing.az_roas or request.GET.platform != 'Flipkart' %}
+            <div class="ceo-kpi-platform-row">
+                <span class="ceo-kpi-platform-brand">
+                    <img src="{% static 'logo/amazon_logo.png' %}" alt="Amazon" class="ceo-platform-logo">
+                    <strong>Amazon</strong>
+                </span>
+                <span class="ceo-kpi-platform-value {% if payload.marketing.az_roas >= 0 %}up{% else %}down{% endif %}">{{ payload.marketing.az_roas|floatformat:2 }}x</span>
+            </div>
+            {% endif %}
+            {% if payload.marketing.fk_roas or request.GET.platform != 'Amazon' %}
+            <div class="ceo-kpi-platform-row">
+                <span class="ceo-kpi-platform-brand">
+                    <img src="{% static 'logo/flipkart_logo.png' %}" alt="Flipkart" class="ceo-platform-logo">
+                    <strong>Flipkart</strong>
+                </span>
+                <span class="ceo-kpi-platform-value {% if payload.marketing.fk_roas >= 0 %}up{% else %}down{% endif %}">{{ payload.marketing.fk_roas|floatformat:2 }}x</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="ceo-kpi-card" id="biz-kpi-adspend-sku">
+        <div class="ceo-kpi-header">
+            <span class="ceo-kpi-label">Ad Spend SKUs</span>
+            <div class="ceo-kpi-icon purple"><span class="material-icons-round" style="font-size:16px">campaign</span></div>
+        </div>
+        <div class="ceo-kpi-value">{{ payload.marketing.ad_spend_sku_count|fmt_num }}</div>
+        <div class="ceo-kpi-window-grid">
+            <div class="ceo-kpi-window-item">
+                <span class="ceo-kpi-window-label">Current Month</span>
+                <span class="ceo-kpi-window-value">{{ payload.kpis.mom_current_ad_spend_sku_count|fmt_num }}</span>
+            </div>
+            <div class="ceo-kpi-window-item">
+                <span class="ceo-kpi-window-label">Previous Month</span>
+                <span class="ceo-kpi-window-value">{{ payload.kpis.mom_previous_ad_spend_sku_count|fmt_num }}</span>
+            </div>
+        </div>
+        <div class="ceo-kpi-platform-split">
+            {% if payload.marketing.az_ad_spend_sku_count or request.GET.platform != 'Flipkart' %}
+            <div class="ceo-kpi-platform-row">
+                <span class="ceo-kpi-platform-brand">
+                    <img src="{% static 'logo/amazon_logo.png' %}" alt="Amazon" class="ceo-platform-logo">
+                    <strong>Amazon</strong>
+                </span>
+                <span class="ceo-kpi-platform-value {% if payload.marketing.az_ad_spend_sku_count >= 0 %}up{% else %}down{% endif %}">{{ payload.marketing.az_ad_spend_sku_count|fmt_num }}</span>
+            </div>
+            {% endif %}
+            {% if payload.marketing.fk_ad_spend_sku_count or request.GET.platform != 'Amazon' %}
+            <div class="ceo-kpi-platform-row">
+                <span class="ceo-kpi-platform-brand">
+                    <img src="{% static 'logo/flipkart_logo.png' %}" alt="Flipkart" class="ceo-platform-logo">
+                    <strong>Flipkart</strong>
+                </span>
+                <span class="ceo-kpi-platform-value {% if payload.marketing.fk_ad_spend_sku_count >= 0 %}up{% else %}down{% endif %}">{{ payload.marketing.fk_ad_spend_sku_count|fmt_num }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="ceo-kpi-card" id="biz-kpi-selling-sku">
+        <div class="ceo-kpi-header">
+            <span class="ceo-kpi-label">Selling SKUs</span>
+            <div class="ceo-kpi-icon green"><span class="material-icons-round" style="font-size:16px">sell</span></div>
+        </div>
+        <div class="ceo-kpi-value">{{ payload.marketing.selling_sku_count|fmt_num }}</div>
+        <div class="ceo-kpi-window-grid">
+            <div class="ceo-kpi-window-item">
+                <span class="ceo-kpi-window-label">Current Month</span>
+                <span class="ceo-kpi-window-value">{{ payload.kpis.mom_current_selling_sku_count|fmt_num }}</span>
+            </div>
+            <div class="ceo-kpi-window-item">
+                <span class="ceo-kpi-window-label">Previous Month</span>
+                <span class="ceo-kpi-window-value">{{ payload.kpis.mom_previous_selling_sku_count|fmt_num }}</span>
+            </div>
+        </div>
+        <div class="ceo-kpi-platform-split">
+            {% if payload.marketing.az_selling_sku_count or request.GET.platform != 'Flipkart' %}
+            <div class="ceo-kpi-platform-row">
+                <span class="ceo-kpi-platform-brand">
+                    <img src="{% static 'logo/amazon_logo.png' %}" alt="Amazon" class="ceo-platform-logo">
+                    <strong>Amazon</strong>
+                </span>
+                <span class="ceo-kpi-platform-value {% if payload.marketing.az_selling_sku_count >= 0 %}up{% else %}down{% endif %}">{{ payload.marketing.az_selling_sku_count|fmt_num }}</span>
+            </div>
+            {% endif %}
+            {% if payload.marketing.fk_selling_sku_count or request.GET.platform != 'Amazon' %}
+            <div class="ceo-kpi-platform-row">
+                <span class="ceo-kpi-platform-brand">
+                    <img src="{% static 'logo/flipkart_logo.png' %}" alt="Flipkart" class="ceo-platform-logo">
+                    <strong>Flipkart</strong>
+                </span>
+                <span class="ceo-kpi-platform-value {% if payload.marketing.fk_selling_sku_count >= 0 %}up{% else %}down{% endif %}">{{ payload.marketing.fk_selling_sku_count|fmt_num }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="ceo-kpi-card" id="biz-kpi-zero-sales-pv">
+        <div class="ceo-kpi-header">
+            <span class="ceo-kpi-label">0-Sales SKU Count</span>
+            <div class="ceo-kpi-icon red"><span class="material-icons-round" style="font-size:16px">visibility_off</span></div>
+        </div>
+        <div class="ceo-kpi-value">{{ payload.marketing.zero_selling_sku_count|fmt_num }}</div>
+        <div class="ceo-kpi-window-grid">
+            <div class="ceo-kpi-window-item">
+                <span class="ceo-kpi-window-label">Current Month</span>
+                <span class="ceo-kpi-window-value">{{ payload.kpis.mom_current_zero_selling_sku_count|fmt_num }}</span>
+            </div>
+            <div class="ceo-kpi-window-item">
+                <span class="ceo-kpi-window-label">Previous Month</span>
+                <span class="ceo-kpi-window-value">{{ payload.kpis.mom_previous_zero_selling_sku_count|fmt_num }}</span>
+            </div>
+        </div>
+        <div class="ceo-kpi-platform-split">
+            {% if payload.marketing.az_zero_selling_sku_count or request.GET.platform != 'Flipkart' %}
+            <div class="ceo-kpi-platform-row">
+                <span class="ceo-kpi-platform-brand">
+                    <img src="{% static 'logo/amazon_logo.png' %}" alt="Amazon" class="ceo-platform-logo">
+                    <strong>Amazon</strong>
+                </span>
+                <span class="ceo-kpi-platform-value {% if payload.marketing.az_zero_selling_sku_count >= 0 %}up{% else %}down{% endif %}">{{ payload.marketing.az_zero_selling_sku_count|fmt_num }}</span>
+            </div>
+            {% endif %}
+            {% if payload.marketing.fk_zero_selling_sku_count or request.GET.platform != 'Amazon' %}
+            <div class="ceo-kpi-platform-row">
+                <span class="ceo-kpi-platform-brand">
+                    <img src="{% static 'logo/flipkart_logo.png' %}" alt="Flipkart" class="ceo-platform-logo">
+                    <strong>Flipkart</strong>
+                </span>
+                <span class="ceo-kpi-platform-value {% if payload.marketing.fk_zero_selling_sku_count >= 0 %}up{% else %}down{% endif %}">{{ payload.marketing.fk_zero_selling_sku_count|fmt_num }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="ceo-kpi-card" id="biz-kpi-fsn-revenue-mix">
+        <div class="ceo-kpi-header">
+            <span class="ceo-kpi-label">Continue vs Discontinue FSN</span>
+            <div class="ceo-kpi-icon amber"><span class="material-icons-round" style="font-size:16px">leaderboard</span></div>
+        </div>
+        <div class="ceo-kpi-dual-metric">
+            <div class="ceo-kpi-dual-row">
+                <div class="ceo-kpi-dual-label">
+                    <strong>Continue FSN Revenue</strong>
+                    <span>SKU Count</span>
+                </div>
+                <div class="ceo-kpi-dual-value">
+                    <strong>{{ payload.kpis.continue_sales_revenue|fmt_rupee }}</strong>
+                    <span>{{ payload.kpis.continue_sku_count|fmt_num }}</span>
+                </div>
+            </div>
+            <div class="ceo-kpi-dual-row">
+                <div class="ceo-kpi-dual-label">
+                    <strong>Discontinue FSN Revenue</strong>
+                    <span>SKU Count</span>
+                </div>
+                <div class="ceo-kpi-dual-value">
+                    <strong>{{ payload.kpis.discontinue_sales_revenue|fmt_rupee }}</strong>
+                    <span>{{ payload.kpis.discontinued_sku_count|fmt_num }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

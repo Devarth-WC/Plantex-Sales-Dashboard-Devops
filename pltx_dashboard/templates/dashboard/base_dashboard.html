@@ -1,0 +1,1436 @@
+{% load dashboard_extras %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://cdn.shopify.com" crossorigin>
+    <link rel="icon" type="image/png"
+        href="//www.plantex.in/cdn/shop/files/Plantex_Favicon.jpg?crop=center&height=32&v=1775624855&width=32">
+    <link rel="preconnect" href="https://fonts.shopifycdn.com" crossorigin>
+    <title id="page-document-title">Plantex — {% block page_title %}Sales Dashboard{% endblock %}</title>
+    <meta name="description" content="Plantex real-time business overview and performance insights dashboard">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://unpkg.com" crossorigin>
+    <link rel="dns-prefetch" href="https://unpkg.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://code.jquery.com" crossorigin>
+    <link rel="dns-prefetch" href="https://code.jquery.com">
+    <link rel="preconnect" href="https://cdn.datatables.net" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.datatables.net">
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <!-- DataTables Dependencies -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css">
+    <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+    <style>
+        /* DataTables inside modals — light theme */
+        .tbl-overlay .dataTables_wrapper { font-size: 12px; color: var(--text, #0f172a); }
+        .tbl-overlay .dataTables_wrapper .dataTables_length,
+        .tbl-overlay .dataTables_wrapper .dataTables_filter,
+        .tbl-overlay .dataTables_wrapper .dataTables_info,
+        .tbl-overlay .dataTables_wrapper .dataTables_paginate { margin-bottom: 8px; }
+        .tbl-overlay .dataTables_wrapper .dataTables_filter input,
+        .tbl-overlay .dataTables_wrapper .dataTables_length select {
+            background: #ffffff; color: var(--text, #0f172a);
+            border: 1px solid var(--border, #e2e8f0); border-radius: 6px; padding: 4px 8px;
+        }
+        .tbl-overlay .dataTables_wrapper .dataTables_paginate .paginate_button {
+            background: #ffffff; color: var(--text, #0f172a) !important;
+            border: 1px solid var(--border, #e2e8f0); border-radius: 4px; padding: 3px 10px;
+            cursor: pointer; margin: 0 2px;
+        }
+        .tbl-overlay .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+        .tbl-overlay .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+            background: var(--accent, #3b82f6) !important; color: #fff !important;
+            border-color: var(--accent, #3b82f6);
+        }
+        .tbl-overlay .dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
+        .tbl-overlay .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
+            opacity: 0.4; cursor: not-allowed;
+        }
+        .tbl-overlay .dt-top { display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 0 6px; gap: 12px; flex-wrap: wrap; }
+        .tbl-overlay .dt-bottom { display: flex; justify-content: space-between; align-items: center;
+            padding: 6px 0 0; }
+        .tbl-overlay table.dataTable thead th { background: #f8fafc !important;
+            color: var(--text, #0f172a); cursor: pointer; user-select: none; }
+    </style>
+    
+    <link rel="stylesheet" href="/static/css/dashboard.css?v=2">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+    <style>
+        /* ── Export Calculated Data Section ── */
+        .download-export-section {
+            margin: 40px 0 24px;
+            padding: 0;
+        }
+
+        .export-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 40%, #f0fdf4 100%);
+            border: 1px solid #bae6fd;
+            border-radius: 18px;
+            padding: 28px 36px;
+            box-shadow: 0 4px 16px rgba(14, 165, 233, 0.08), 0 1px 4px rgba(0, 0, 0, 0.03);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .export-card:hover {
+            box-shadow: 0 8px 28px rgba(14, 165, 233, 0.14), 0 2px 6px rgba(0, 0, 0, 0.04);
+            transform: translateY(-2px);
+        }
+
+        .export-card-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex: 1;
+        }
+
+        .export-icon-wrap {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #0ea5e9, #06b6d4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+        }
+
+        .export-icon-wrap .material-icons-round {
+            font-size: 26px;
+            color: #ffffff;
+        }
+
+        .export-text {
+            flex: 1;
+        }
+
+        .export-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #0c4a6e;
+            margin-bottom: 4px;
+            letter-spacing: -0.3px;
+        }
+
+        .export-subtitle {
+            font-size: 13px;
+            color: #64748b;
+            line-height: 1.5;
+        }
+
+        .export-card-actions {
+            display: flex;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .export-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            white-space: nowrap;
+        }
+
+        .export-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .csv-btn {
+            background: linear-gradient(135deg, #059669, #10b981);
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3);
+        }
+
+        .csv-btn:hover {
+            box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);
+        }
+
+        .excel-btn {
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+        }
+
+        .excel-btn:hover {
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .export-card {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 20px 24px;
+            }
+
+            .export-card-actions {
+                width: 100%;
+            }
+
+            .export-btn {
+                flex: 1;
+                justify-content: center;
+            }
+        }
+    </style>
+    <!-- Page-specific styles (Upload / Management pages inject their CSS here).
+         This tag is cleared by dashboardContentLoaded JS on every HTMX navigation
+         so no non-dashboard CSS can persist and distort the dashboard layout. -->
+    <style id="page-specific-styles">
+        {% block extra_head_css %}
+        {% endblock %}
+    </style>
+    {% block extra_head_scripts %}{% endblock %}
+</head>
+
+<body class="has-sidebar">
+
+    <!-- HTMX Loading Spinner Overlay -->
+    <div id="htmxLoadingOverlay" style="
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.35);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+">
+        <div style="
+        background: #1e293b;
+        border: 1px solid rgba(148, 163, 184, 0.12);
+        border-radius: 16px;
+        padding: 28px 40px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        box-shadow: 0 24px 48px rgba(0,0,0,0.4);
+    ">
+            <div style="
+            width: 40px; height: 40px;
+            border: 3px solid rgba(59,130,246,0.2);
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: htmxSpin 0.7s linear infinite;
+        "></div>
+            <div style="font-size: 13px; font-weight: 600; color: #94a3b8; letter-spacing: 0.3px;">Loading dashboard…
+            </div>
+        </div>
+    </div>
+    <style>
+        @keyframes htmxSpin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+
+    <!-- Django Messages Toast Notifications -->
+    {% if messages %}
+    <div id="toastContainer" style="
+        position: fixed;
+        top: 24px;
+        right: 24px;
+        z-index: 99999;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        pointer-events: none;
+    ">
+        {% for message in messages %}
+        <div class="toast-msg toast-{{ message.tags }}" style="
+            background: {% if 'error' in message.tags %}#fef2f2{% elif 'success' in message.tags %}#f0fdf4{% else %}#f8fafc{% endif %};
+            border: 1px solid {% if 'error' in message.tags %}#fca5a5{% elif 'success' in message.tags %}#86efac{% else %}#e2e8f0{% endif %};
+            border-left: 4px solid {% if 'error' in message.tags %}#ef4444{% elif 'success' in message.tags %}#22c55e{% else %}#64748b{% endif %};
+            color: {% if 'error' in message.tags %}#991b1b{% elif 'success' in message.tags %}#166534{% else %}#334155{% endif %};
+            padding: 14px 20px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 280px;
+            max-width: 400px;
+            pointer-events: auto;
+            animation: toastSlideIn 0.3s cubic-bezier(0.4,0,0.2,1);
+        ">
+            <span class="material-icons-round" style="font-size:18px;">{% if 'error' in message.tags %}error{% elif 'success' in message.tags %}check_circle{% else %}info{% endif %}</span>
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    <style>
+        @keyframes toastSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(40px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes toastFadeOut {
+            to {
+                opacity: 0;
+                transform: translateX(40px);
+            }
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var toasts = document.querySelectorAll('.toast-msg');
+            toasts.forEach(function (t) {
+                setTimeout(function () {
+                    t.style.animation = 'toastFadeOut 0.4s ease forwards';
+                    setTimeout(function () { t.remove(); }, 400);
+                }, 4000);
+            });
+        });
+    </script>
+    {% endif %}
+
+    <div id="globalUploadProgressNotifier"
+        style="display:none; position:fixed; top:24px; right:24px; z-index:3000; min-width:320px; max-width:460px; border-radius:12px; padding:12px 14px; box-shadow:0 8px 24px rgba(15,23,42,0.16); font-size:13px; font-weight:600; line-height:1.4; align-items:flex-start; gap:10px;">
+        <span class="material-icons-round" id="globalUploadProgressNotifierIcon" style="font-size:18px; margin-top:1px;">cloud_upload</span>
+        <div>
+            <div style="font-size:11px; font-weight:700; letter-spacing:0.3px; text-transform:uppercase; opacity:0.8;">Upload Progress</div>
+            <div id="globalUploadProgressNotifierText"></div>
+        </div>
+    </div>
+
+    <!-- Sidebar Navigation -->
+    <div class="app-sidebar">
+        <div class="sidebar-brand">
+            <span class="brand-text">plante<span class="brand-x">x</span></span>
+        </div>
+        <nav class="sidebar-nav">
+            {% if 'ceo_dashboard' in user_features %}
+            <a href="{% url 'ceo-dashboard' %}"
+                class="nav-item {% if request.resolver_match.url_name == 'ceo-dashboard' %}active{% endif %}"
+                id="nav-ceo">
+                <span class="material-icons-round nav-icon">dashboard</span>
+                CEO Dashboard
+            </a>
+            {% endif %}
+            {% if 'business_dashboard' in user_features %}
+            <a href="{% url 'business-dashboard' %}"
+                class="nav-item {% if request.resolver_match.url_name == 'business-dashboard' %}active{% endif %}"
+                id="nav-business">
+                <span class="material-icons-round nav-icon">business</span>
+                Business
+            </a>
+            {% endif %}
+            {% if 'category_dashboard' in user_features %}
+            <a href="{% url 'category-dashboard' %}"
+                class="nav-item {% if request.resolver_match.url_name == 'category-dashboard' %}active{% endif %}"
+                id="nav-category">
+                <span class="material-icons-round nav-icon">category</span>
+                Category
+            </a>
+            {% endif %}
+            {% if 'upload_data' in user_features %}
+            <a href="{% url 'dashboard-upload' %}"
+                class="nav-item {% if request.resolver_match.url_name == 'dashboard-upload' %}active{% endif %}"
+                id="nav-upload">
+                <span class="material-icons-round nav-icon">upload_file</span>
+                Upload Data
+            </a>
+            {% endif %}
+
+            {% if 'replenishment' in user_features %}
+            <a href="{% url 'replenishment-index' %}"
+                class="nav-item {% if request.resolver_match.url_name == 'replenishment-index' %}active{% endif %}"
+                id="nav-replenishment">
+                <span class="material-icons-round nav-icon">inventory_2</span>
+                Replenishment
+            </a>
+            {% endif %}
+
+            {% if logged_user.is_main_user or 'user_management' in user_features or 'role_management' in user_features %}
+            <div class="nav-sep"></div>
+            <div class="nav-heading"
+                style="padding: 10px 20px; font-size: 11px; text-transform: uppercase; color: #a1a1aa; font-weight: 600; letter-spacing: 0.5px;">
+                Administration</div>
+
+            {% if logged_user.is_main_user or 'user_management' in user_features %}
+            <a href="{% url 'user-management' %}"
+                class="nav-item {% if request.resolver_match.url_name == 'user-management' %}active{% endif %}"
+                id="nav-user-management">
+                <span class="material-icons-round nav-icon">people</span>
+                User Management
+            </a>
+            {% endif %}
+
+            {% if logged_user.is_main_user or 'role_management' in user_features %}
+            <a href="{% url 'role-management' %}"
+                class="nav-item {% if request.resolver_match.url_name == 'role-management' %}active{% endif %}"
+                id="nav-role-management">
+                <span class="material-icons-round nav-icon">admin_panel_settings</span>
+                Role Management
+            </a>
+            {% endif %}
+            {% endif %}
+
+            <div class="nav-sep"></div>
+            <a href="#" class="nav-item disabled" id="nav-reports">
+                <span class="material-icons-round nav-icon">summarize</span>
+                Reports
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="sidebar-status">
+                <span class="status-dot"></span>
+                Data updated<br><span class="status-time">2 min ago</span>
+            </div>
+            <button
+                class="sidebar-refresh-btn"
+                id="sidebarRefreshButton"
+                type="button"
+                onclick="forceDashboardRefresh(this)">
+                <span class="material-icons-round" style="font-size:14px">refresh</span>
+                <span class="sidebar-refresh-btn-text">Refresh</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main App Content -->
+    <div class="app-main">
+        <div class="topbar">
+            <div class="topbar-heading">
+                <div class="topbar-title" id="page-topbar-title">{% block dashboard_title %}Dashboard{% endblock %}</div>
+                <div class="topbar-subtitle" id="page-topbar-subtitle">{% block dashboard_subtitle %}Real-time business overview & performance insights{% endblock %}</div>
+            </div>
+            <div class="topbar-spacer"></div>
+
+            <div id="dashboardTopbarFilters">
+                {% block topbar_filters %}
+                {% endblock %}
+            </div>
+            <div class="user-profile">
+                <div class="user-avatar" aria-hidden="true">
+                    <span class="material-icons-round user-avatar-icon">admin_panel_settings</span>
+                    <span class="user-avatar-initials">
+                        {{ logged_user.fname|default:"U"|truncatechars:1 }}{{ logged_user.lname|default:"N"|truncatechars:1 }}
+                    </span>
+                </div>
+                <div class="user-info">
+                    <span class="user-name">{{ logged_user.fname }} {{ logged_user.lname }}</span>
+                    <span class="user-role-wrap">
+                        <span class="material-icons-round user-role-icon">verified_user</span>
+                        <span class="user-role" id="page-user-role">{% block user_role %}Business Head{% endblock %}</span>
+                    </span>
+                </div>
+            </div>
+            <a href="{% url 'account-logout' %}" class="btn-logout">
+                <span class="material-icons-round" style="font-size:17px">logout</span>
+            </a>
+        </div>
+
+        <div id="stockUploadBanner"
+            class="stock-upload-banner {% if show_stock_upload_banner %}is-visible{% else %}is-hidden{% endif %}">
+            <div class="stock-upload-banner-icon">
+                <span class="material-icons-round">inventory_2</span>
+            </div>
+            <div class="stock-upload-banner-content">
+                <div class="stock-upload-banner-title">Inventory Health Needs Today’s Stock Upload</div>
+                <div class="stock-upload-banner-text">Please upload today's Amazon and Flipkart stock files to get accurate inventory health.</div>
+            </div>
+            <a href="{% url 'dashboard-upload' %}" class="stock-upload-banner-cta">
+                <span class="material-icons-round">upload_file</span>
+                Upload Now
+            </a>
+        </div>
+
+        <div id="dashboardRefreshBanner"
+            style="margin: 12px 22px 0; border-radius: 10px; padding: 10px 14px; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; display:none;">
+            <span class="material-icons-round" style="font-size: 18px;" id="dashboardRefreshBannerIcon">autorenew</span>
+            <span id="dashboardRefreshBannerText"></span>
+        </div>
+
+        <!-- Secondary Filters Bar above KPIs -->
+        <div class="secondary-filter-bar" id="secondaryFilters" hx-swap-oob="true" {% if request.resolver_match.url_name != 'ceo-dashboard' and request.resolver_match.url_name != 'business-dashboard' and request.resolver_match.url_name != 'category-dashboard' %}style="display:none;" {% endif %}>
+            {% if request.resolver_match.url_name == 'ceo-dashboard' or request.resolver_match.url_name == 'business-dashboard' or request.resolver_match.url_name == 'category-dashboard' %}
+            <form method="GET" action="" class="topbar-filters" style="margin:0;" id="dashboardFilterForm"
+                hx-get="{{ request.path }}" hx-target=".dash-body" hx-push-url="true" hx-swap="innerHTML"
+                hx-trigger="submit" hx-sync="body:abort">
+
+                <div class="topbar-filter-group filter-group-uniform">
+                    <span class="filter-label">Date Range</span>
+                    <select class="filter-select-top" id="dateRangeSelect" name="date_range"
+                        onchange="handleDateRangeChange(event, this)">
+                        <option value="">All Time</option>
+                        <option value="yesterday" {% if request.GET.date_range == 'yesterday' %}selected{% endif %}>
+                            Yesterday</option>
+                        <option value="last_7_days" {% if request.GET.date_range == 'last_7_days' %}selected{% endif %}>
+                            Last 7 Days</option>
+                        <option value="last_15_days" {% if request.GET.date_range == 'last_15_days' %}selected{% endif %}>
+                            Last 15 Days</option>
+                        <option value="last_month" {% if request.GET.date_range == 'last_month' %}selected{% endif %}>Last
+                            Month</option>
+                        <option value="last_3_months" {% if request.GET.date_range == 'last_3_months' %}selected{% endif %}>Last 3 Months</option>
+                        <option value="last_6_months" {% if request.GET.date_range == 'last_6_months' %}selected{% endif %}>Last 6 Months</option>
+                        <option value="last_1_year" {% if request.GET.date_range == 'last_1_year' %}selected{% endif %}>
+                            Last 1 Year</option>
+                        <option value="custom" {% if request.GET.date_range == 'custom' %}selected{% endif %}>Custom Dates
+                        </option>
+                    </select>
+                </div>
+                <div class="topbar-filter-group custom-date-group" id="customDateGroup"
+                    style="display: {% if request.GET.date_range == 'custom' %}flex{% else %}none{% endif %}; margin-left: 4px;">
+                    <span class="filter-label">&nbsp;</span>
+                    <div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
+                        <div style="position: relative; width: 220px; overflow: visible;">
+                            <input type="text" id="flatpickrRange" placeholder="Select Dates..."
+                                style="width: 100%; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 7px 12px; padding-right: 36px; font-size: 13px; font-family: 'Inter', sans-serif; color: #0f172a; outline: none; cursor: pointer; transition: border-color 0.2s; position: relative; z-index: 1;"
+                                onfocus="this.style.borderColor='#3b82f6'">
+                            <span class="material-icons-round"
+                                onclick="document.getElementById('flatpickrRange').click()"
+                                style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 18px; color: #64748b; transition: color 0.2s; z-index: 2; pointer-events: auto;"
+                                onmouseover="this.style.color='#0f172a'"
+                                onmouseout="this.style.color='#64748b'">calendar_month</span>
+                        </div>
+                        <input type="hidden" id="customStartDate" name="start_date"
+                            value="{{ request.GET.start_date }}">
+                        <input type="hidden" id="customEndDate" name="end_date" value="{{ request.GET.end_date }}">
+                        <button type="button"
+                            style="padding: 7px 16px; background: #2563eb; color: #ffffff; border: none; border-radius: 6px; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 12px; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 4px rgba(37,99,235,0.2);"
+                            onmouseover="this.style.background='#1d4ed8'; this.style.transform='translateY(-1px)';"
+                            onmouseout="this.style.background='#2563eb'; this.style.transform='translateY(0)';"
+                            onclick="submitCustomDate()">Apply</button>
+                    </div>
+                </div>
+                <div class="topbar-filter-group filter-group-uniform">
+                    <span class="filter-label">Platform</span>
+                    <select class="filter-select-top" id="platformSelect" name="platform"
+                        onchange="syncFilterVisibility(); markFiltersDirty()">
+                        <option value="">All</option>
+                        <option value="Amazon" {% if request.GET.platform == 'Amazon' %}selected{% endif %}>Amazon
+                        </option>
+                        <option value="Flipkart" {% if request.GET.platform == 'Flipkart' %}selected{% endif %}>Flipkart
+                        </option>
+                    </select>
+                </div>
+
+                <div class="topbar-filter-group filter-group-multi filter-group-uniform">
+                    <span class="filter-label">
+                        <span class="material-icons-round"
+                            style="font-size:11px;vertical-align:middle;margin-right:3px;">category</span>Category
+                    </span>
+                    <select id="categorySelect" name="category" class="filter-select-top" multiple
+                        onchange="markFiltersDirty()">
+                        {% for c in selected_filters.categories %}
+                        <option value="{{ c }}" selected>{{ c }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="topbar-filter-group filter-group-multi filter-group-asin filter-group-uniform">
+                    <span class="filter-label">
+                        <span class="material-icons-round"
+                            style="font-size:11px;vertical-align:middle;margin-right:3px;">qr_code</span>ASIN
+                    </span>
+                    <select id="asinSelect" name="asin" class="filter-select-top" multiple
+                        onchange="markFiltersDirty()">
+                        {% for a in selected_filters.asins %}
+                        <option value="{{ a }}" selected>{{ a }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="topbar-filter-group filter-group-multi filter-group-uniform" id="fsnFilterGroup" style="display:none;">
+                    <span class="filter-label">
+                        <span class="material-icons-round"
+                            style="font-size:11px;vertical-align:middle;margin-right:3px;">qr_code</span>FSN
+                    </span>
+                    <select id="fsnSelect" name="fsn" class="filter-select-top" multiple
+                        onchange="markFiltersDirty()">
+                        {% for f in selected_filters.fsns %}
+                        <option value="{{ f }}" selected>{{ f }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="topbar-filter-group topbar-filter-action-group">
+                    <span class="filter-label filter-label-spacer" aria-hidden="true">Actions</span>
+                    <button type="button" class="filter-action-btn" id="applyFiltersBtn" data-pending="0"
+                        data-loading="0" onclick="applyDashboardFilters()" title="Apply selected filters">
+                        <span class="material-icons-round" aria-hidden="true">filter_alt</span>
+                        <span class="filter-action-btn__label" data-role="label">Apply Filters</span>
+                    </button>
+                </div>
+
+                <div class="topbar-filter-group topbar-filter-action-group">
+                    <span class="filter-label filter-label-spacer" aria-hidden="true">Actions</span>
+                    <button type="button" class="btn-text-reset" onclick="window.location.href=window.location.pathname"
+                        title="Reset all filters">Reset Filters</button>
+                </div>
+            </form>
+            {% endif %}
+        </div>
+
+        <div class="dash-body" id="dash-body">
+            {% block dashboard_content %}{% endblock %}
+        </div>
+
+        <!-- Download Calculated Data Section —
+             Placed OUTSIDE .dash-body so HTMX innerHTML swaps don't remove it.
+             Shown/hidden via syncExportSection() JavaScript. -->
+        <div class="download-export-section" id="downloadExportSection" style="display:none;">
+            <div class="export-card">
+                <div class="export-card-left">
+                    <div class="export-icon-wrap">
+                        <span class="material-icons-round">download_for_offline</span>
+                    </div>
+                    <div class="export-text">
+                        <div class="export-title">Export Calculated Data</div>
+                        <div class="export-subtitle">Download the processed dashboard data with all computed metrics
+                            (ROAS, TACoS, CVR, inventory and spend metrics) respecting your current filters.</div>
+                    </div>
+                </div>
+                <div class="export-card-actions">
+                    <button class="export-btn csv-btn" id="dlCalcCsv" onclick="downloadCalculatedData('csv')"
+                        title="Download as CSV">
+                        <span class="material-icons-round" style="font-size:18px">description</span>
+                        <span>Download CSV</span>
+                    </button>
+                    <button class="export-btn excel-btn" id="dlCalcExcel" onclick="downloadCalculatedData('excel')"
+                        title="Download as Excel with Annexure">
+                        <span class="material-icons-round" style="font-size:18px">table_view</span>
+                        <span>Download Excel</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.DASHBOARD_VIEW_TYPE = "{% block view_type %}business{% endblock %}";
+        window.DASHBOARD_PAYLOAD = {{ payload_json|safe|default:"null" }};
+        window.SELECTED_FILTERS = {{ selected_filters_json|safe|default:"{}" }};
+        window.DASHBOARD_REFRESH_STATUS = {{ dashboard_refresh_status_json|safe|default:'{"state":"idle","message":""}' }};
+        window.CURRENT_PAGE_URL_NAME = "{{ request.resolver_match.url_name|default:'' }}";
+        window.UPLOAD_PROGRESS_STORAGE_KEY = "pltx_upload_progress_v1";
+        window.DASHBOARD_REFRESH_NOW_URL = "{% url 'dashboard-refresh-now' %}";
+
+        function isUploadMenuPage() {
+            return window.CURRENT_PAGE_URL_NAME === "dashboard-upload";
+        }
+
+        function readUploadProgressState() {
+            try {
+                const raw = localStorage.getItem(window.UPLOAD_PROGRESS_STORAGE_KEY);
+                if (!raw) return { status: "", message: "", active: false, updated_at: 0 };
+                const parsed = JSON.parse(raw);
+                if (!parsed || typeof parsed !== "object") {
+                    return { status: "", message: "", active: false, updated_at: 0 };
+                }
+                return {
+                    status: String(parsed.status || ""),
+                    message: String(parsed.message || ""),
+                    active: Boolean(parsed.active),
+                    updated_at: Number(parsed.updated_at || 0),
+                    visible_until: Number(parsed.visible_until || 0),
+                };
+            } catch (e) {
+                return { status: "", message: "", active: false, updated_at: 0 };
+            }
+        }
+        window.readUploadProgressState = readUploadProgressState;
+
+        function writeUploadProgressState(next) {
+            try {
+                localStorage.setItem(window.UPLOAD_PROGRESS_STORAGE_KEY, JSON.stringify(next));
+            } catch (e) {
+                // ignore localStorage write failures
+            }
+        }
+
+        function showGlobalUploadNotifier(state) {
+            const box = document.getElementById('globalUploadProgressNotifier');
+            const icon = document.getElementById('globalUploadProgressNotifierIcon');
+            const text = document.getElementById('globalUploadProgressNotifierText');
+            if (!box || !icon || !text) return;
+
+            const now = Date.now();
+            const status = String(state.status || "").toLowerCase();
+            const isTransientVisible = state.visible_until && state.visible_until > now;
+            const shouldShow = !isUploadMenuPage() && (state.active || isTransientVisible);
+
+            if (!shouldShow) {
+                box.style.display = 'none';
+                return;
+            }
+
+            box.style.display = 'flex';
+            if (status === "processing" || status === "partial") {
+                box.style.background = '#eff6ff';
+                box.style.border = '1px solid #93c5fd';
+                box.style.color = '#1e3a8a';
+                icon.textContent = 'autorenew';
+            } else if (status === "paused") {
+                box.style.background = '#fef3c7';
+                box.style.border = '1px solid #f59e0b';
+                box.style.color = '#92400e';
+                icon.textContent = 'pause_circle';
+            } else if (status === "complete" || status === "success") {
+                box.style.background = '#dcfce7';
+                box.style.border = '1px solid #4ade80';
+                box.style.color = '#166534';
+                icon.textContent = 'check_circle';
+            } else if (status === "error") {
+                box.style.background = '#fee2e2';
+                box.style.border = '1px solid #f87171';
+                box.style.color = '#991b1b';
+                icon.textContent = 'error';
+            } else {
+                box.style.background = '#f8fafc';
+                box.style.border = '1px solid #cbd5e1';
+                box.style.color = '#1f2937';
+                icon.textContent = 'notifications';
+            }
+            text.textContent = state.message || 'Upload in progress...';
+        }
+
+        function emitUploadProgressEvent(state) {
+            window.dispatchEvent(new CustomEvent('pltx-upload-progress', { detail: state }));
+        }
+
+        window.setGlobalUploadProgress = function (payload) {
+            const prev = readUploadProgressState();
+            const next = {
+                status: String(payload.status || prev.status || ""),
+                message: String(payload.message || prev.message || ""),
+                active: typeof payload.active === "boolean" ? payload.active : prev.active,
+                updated_at: Date.now(),
+                visible_until: Number(payload.visible_until || prev.visible_until || 0),
+            };
+            writeUploadProgressState(next);
+            showGlobalUploadNotifier(next);
+            emitUploadProgressEvent(next);
+            return next;
+        };
+
+        window.clearGlobalUploadProgress = function () {
+            const next = { status: "", message: "", active: false, updated_at: Date.now(), visible_until: 0 };
+            writeUploadProgressState(next);
+            showGlobalUploadNotifier(next);
+            emitUploadProgressEvent(next);
+        };
+
+        function clearDashboardStorageCache() {
+            var storageKeys = [window.UPLOAD_PROGRESS_STORAGE_KEY];
+            [window.localStorage, window.sessionStorage].forEach(function (storage) {
+                if (!storage) return;
+                try {
+                    for (var i = storage.length - 1; i >= 0; i--) {
+                        var key = storage.key(i);
+                        if (!key) continue;
+                        if (
+                            storageKeys.indexOf(key) !== -1 ||
+                            key.indexOf("pltx_dashboard_") === 0 ||
+                            key.indexOf("htmx-history-cache") === 0
+                        ) {
+                            storage.removeItem(key);
+                        }
+                    }
+                } catch (e) {
+                    // ignore storage cleanup issues
+                }
+            });
+        }
+
+        async function clearBrowserCacheStorage() {
+            if (!("caches" in window) || !window.caches || typeof window.caches.keys !== "function") {
+                return;
+            }
+            try {
+                var cacheKeys = await window.caches.keys();
+                await Promise.all(cacheKeys.map(function (cacheKey) {
+                    return window.caches.delete(cacheKey);
+                }));
+            } catch (e) {
+                // ignore Cache Storage cleanup issues
+            }
+        }
+
+        async function forceDashboardRefresh(button) {
+            if (button && button.disabled) return;
+
+            if (button) {
+                button.disabled = true;
+                button.classList.add('is-loading');
+                var labelNode = button.querySelector('.sidebar-refresh-btn-text');
+                if (labelNode) {
+                    labelNode.textContent = 'Refreshing...';
+                }
+            }
+
+            try {
+                clearDashboardStorageCache();
+                await clearBrowserCacheStorage();
+                await fetch(window.DASHBOARD_REFRESH_NOW_URL, {
+                    credentials: 'same-origin',
+                    cache: 'no-store',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+            } catch (e) {
+                // Fall back to a hard reload even if the invalidate request fails.
+            }
+
+            var refreshedUrl = new URL(window.location.href);
+            refreshedUrl.searchParams.set('_refresh', String(Date.now()));
+            window.location.replace(refreshedUrl.toString());
+        }
+
+        (function connectGlobalUploadProgressSocket() {
+            let socket = null;
+            let reconnectTimer = null;
+
+            function scheduleReconnect() {
+                if (reconnectTimer) return;
+                reconnectTimer = setTimeout(() => {
+                    reconnectTimer = null;
+                    connect();
+                }, 3000);
+            }
+
+            function handleServerProgressMessage(data) {
+                const status = String(data.status || "").toLowerCase();
+                const message = String(data.message || "");
+                const now = Date.now();
+                const isProcessing = status === "processing" || status === "partial";
+                const isTerminal = status === "complete" || status === "success" || status === "error";
+                window.setGlobalUploadProgress({
+                    status,
+                    message,
+                    active: isProcessing,
+                    visible_until: isTerminal ? now + 12000 : 0,
+                });
+            }
+
+            function connect() {
+                if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
+                    return;
+                }
+                const wss = window.location.protocol === "https:" ? "wss" : "ws";
+                socket = new WebSocket(`${wss}://${window.location.host}/ws/upload-progress/`);
+                socket.onmessage = function (event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        handleServerProgressMessage(data);
+                    } catch (e) {
+                        // ignore malformed progress message
+                    }
+                };
+                socket.onclose = function () {
+                    socket = null;
+                    scheduleReconnect();
+                };
+                socket.onerror = function () {
+                    try {
+                        socket.close();
+                    } catch (e) {
+                        // ignore close errors
+                    }
+                };
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                showGlobalUploadNotifier(readUploadProgressState());
+                connect();
+            });
+
+            window.addEventListener('storage', function (event) {
+                if (event && event.key === window.UPLOAD_PROGRESS_STORAGE_KEY) {
+                    showGlobalUploadNotifier(readUploadProgressState());
+                }
+            });
+        })();
+
+        // Function to update active nav item based on view type
+        function updateActiveNav(viewType) {
+            // Remove active class from all nav items
+            document.querySelectorAll('.sidebar-nav .nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            // Add active class to the corresponding nav item
+            if (viewType === 'ceo') {
+                document.getElementById('nav-ceo')?.classList.add('active');
+            } else if (viewType === 'business') {
+                document.getElementById('nav-business')?.classList.add('active');
+            } else if (viewType === 'category') {
+                document.getElementById('nav-category')?.classList.add('active');
+            } else if (viewType === 'upload') {
+                document.getElementById('nav-upload')?.classList.add('active');
+            } else if (viewType === 'replenishment') {
+                document.getElementById('nav-replenishment')?.classList.add('active');
+            } else if (viewType === 'user_management') {
+                document.getElementById('nav-user-management')?.classList.add('active');
+            } else if (viewType === 'role_management') {
+                document.getElementById('nav-role-management')?.classList.add('active');
+            }
+        }
+
+        // Update nav on initial load
+        document.addEventListener('DOMContentLoaded', function () {
+            updateActiveNav(window.DASHBOARD_VIEW_TYPE);
+        });
+
+        // Listen for custom dashboard content loaded event (from HTMX)
+        document.addEventListener('dashboardContentLoaded', function (event) {
+            const viewType = event.detail.viewType;
+            updateActiveNav(viewType);
+        });
+
+        // Update nav when HTMX completes a swap
+        document.body.addEventListener('htmx:afterSettle', function (event) {
+            // Update view type from the newly loaded content
+            const newViewType = document.querySelector('[data-view-type]')?.getAttribute('data-view-type')
+                || window.DASHBOARD_VIEW_TYPE;
+            window.DASHBOARD_VIEW_TYPE = newViewType;
+            updateActiveNav(newViewType);
+
+            // Re-initialize flatpickr to attach to the newly swapped DOM element
+            if (typeof initFlatpickr === 'function') initFlatpickr();
+
+            // Restore custom date group visibility if 'custom' date range is selected
+            // After OOB swap of secondary filter bar, customDateGroup gets reset to server state
+            var dateRangeSelect = document.getElementById('dateRangeSelect');
+            var customDateGroup = document.getElementById('customDateGroup');
+            if (dateRangeSelect && customDateGroup && dateRangeSelect.value === 'custom') {
+                customDateGroup.style.display = 'flex';
+            }
+        });
+
+        let fpInstance;
+        function initFlatpickr() {
+            var defaultStart = document.getElementById('customStartDate') ? document.getElementById('customStartDate').value : "{{ request.GET.start_date|default:'' }}";
+            var defaultEnd = document.getElementById('customEndDate') ? document.getElementById('customEndDate').value : "{{ request.GET.end_date|default:'' }}";
+            var defaultDates = [];
+            if (defaultStart && defaultEnd) {
+                if (defaultStart === defaultEnd) {
+                    defaultDates = [defaultStart];  // single date
+                } else {
+                    defaultDates = [defaultStart, defaultEnd];  // range
+                }
+            } else if (defaultStart) {
+                defaultDates = [defaultStart];  // single date fallback
+            }
+
+            var fpEl = document.getElementById("flatpickrRange");
+            if (fpEl) {
+                if (fpEl._flatpickr) {
+                    fpEl._flatpickr.destroy();
+                }
+                fpInstance = flatpickr(fpEl, {
+                    mode: "range",
+                    dateFormat: "Y-m-d",
+                    defaultDate: defaultDates,
+                    onChange: function (selectedDates, dateStr, instance) {
+                        if (selectedDates.length === 2) {
+                            document.getElementById('customStartDate').value = instance.formatDate(selectedDates[0], "Y-m-d");
+                            document.getElementById('customEndDate').value = instance.formatDate(selectedDates[1], "Y-m-d");
+                        } else if (selectedDates.length === 1) {
+                            // Single date selected — treat as both start and end
+                            var singleDate = instance.formatDate(selectedDates[0], "Y-m-d");
+                            document.getElementById('customStartDate').value = singleDate;
+                            document.getElementById('customEndDate').value = singleDate;
+                        } else {
+                            document.getElementById('customStartDate').value = '';
+                            document.getElementById('customEndDate').value = '';
+                        }
+                    }
+                });
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            initFlatpickr();
+            initRemoteFilterSelects();
+            // Set initial platform-dependent filter visibility
+            syncFilterVisibility();
+            markFiltersClean();
+            bindFilterFormGuards();
+        });
+
+        function getApplyFiltersLabel(btn) {
+            if (!btn) return null;
+            return btn.querySelector('[data-role="label"]');
+        }
+
+        function markFiltersDirty() {
+            var btn = document.getElementById('applyFiltersBtn');
+            if (!btn) return;
+            if (btn.dataset.loading === '1') return;
+            btn.dataset.pending = '1';
+        }
+
+        function markFiltersClean() {
+            var btn = document.getElementById('applyFiltersBtn');
+            if (!btn) return;
+            if (btn.dataset.loading === '1') return;
+            btn.dataset.pending = '0';
+        }
+
+        function setApplyFiltersLoading(isLoading) {
+            var btn = document.getElementById('applyFiltersBtn');
+            var label = getApplyFiltersLabel(btn);
+            if (!btn) return;
+            if (!btn.dataset.defaultLabel) {
+                btn.dataset.defaultLabel = label ? label.textContent : (btn.textContent || 'Apply Filters');
+            }
+
+            if (isLoading) {
+                btn.dataset.loading = '1';
+                btn.disabled = true;
+                btn.setAttribute('aria-busy', 'true');
+                if (label) label.textContent = 'Applying filters...';
+            } else {
+                btn.dataset.loading = '0';
+                btn.disabled = false;
+                btn.setAttribute('aria-busy', 'false');
+                if (label) label.textContent = btn.dataset.defaultLabel || 'Apply Filters';
+                // Keep the clean visual state after a successful apply
+                markFiltersClean();
+            }
+        }
+
+        function applyDashboardFilters() {
+            var form = document.getElementById('dashboardFilterForm');
+            if (!form) return;
+            setApplyFiltersLoading(true);
+            window.__dashboardAllowSubmit = true;
+            htmx.trigger(form, 'submit');
+            markFiltersClean();
+        }
+
+        function bindFilterFormGuards() {
+            var form = document.getElementById('dashboardFilterForm');
+            if (!form || form.dataset.guardsBound === '1') return;
+            form.dataset.guardsBound = '1';
+
+            form.addEventListener('submit', function (e) {
+                // Prevent accidental submit via Enter/search inputs; require explicit Apply click.
+                if (!window.__dashboardAllowSubmit) {
+                    e.preventDefault();
+                    return false;
+                }
+                window.__dashboardAllowSubmit = false;
+                return true;
+            });
+
+            form.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    var target = e.target;
+                    var isTextInput = target && target.tagName === 'INPUT' && target.type !== 'button';
+                    if (isTextInput && target.id !== 'flatpickrRange') {
+                        e.preventDefault();
+                    }
+                }
+            });
+        }
+
+        function handleDateRangeChange(event, selectElement) {
+            if (selectElement.value === 'custom') {
+                if (event) event.stopPropagation();
+                document.getElementById('customDateGroup').style.display = 'flex';
+                if (fpInstance) fpInstance.open();
+            } else {
+                document.getElementById('customDateGroup').style.display = 'none';
+                document.getElementById('customStartDate').value = '';
+                document.getElementById('customEndDate').value = '';
+                markFiltersDirty();
+            }
+        }
+
+        function submitCustomDate() {
+            var startDate = document.getElementById('customStartDate').value;
+            var endDate = document.getElementById('customEndDate').value;
+
+            if (!startDate) {
+                alert("Please select a date or date range.");
+                return;
+            }
+
+            // If only start date is set (single date), use it as both start and end
+            if (!endDate) {
+                endDate = startDate;
+                document.getElementById('customEndDate').value = endDate;
+            }
+
+            var sDate = new Date(startDate);
+            var eDate = new Date(endDate);
+
+            if (sDate > eDate) {
+                alert("Start date should not be after the end date.");
+                return;
+            }
+
+            markFiltersDirty();
+            applyDashboardFilters();
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="/static/js/filters.js?v=2"></script>
+    <script src="/static/js/spa.js?v=2"></script>
+    <script src="/static/js/charts.js?v=2"></script>
+    <script>
+        var _remoteFilterDefs = [
+            { id: 'categorySelect', field: 'category', placeholder: 'All Categories' },
+            { id: 'asinSelect', field: 'asin', placeholder: 'All ASINs' },
+            { id: 'fsnSelect', field: 'fsn', placeholder: 'All FSNs' },
+        ];
+        var _remoteFilterAbortControllers = {};
+
+        function _buildRemoteFilterQueryString(field, term, page) {
+            var query = new URLSearchParams();
+            query.set('field', field);
+            query.set('q', term || '');
+            query.set('page', String(page || 1));
+            query.set('page_size', '50');
+
+            var form = document.getElementById('dashboardFilterForm');
+            if (form) {
+                var fd = new FormData(form);
+                fd.forEach(function (value, key) {
+                    if (!value) return;
+                    if (key === field || key === 'field' || key === 'q' || key === 'page' || key === 'page_size') return;
+                    query.append(key, value);
+                });
+            } else {
+                var current = new URLSearchParams(window.location.search || '');
+                current.forEach(function (value, key) {
+                    if (!value) return;
+                    if (key === field || key === 'field' || key === 'q' || key === 'page' || key === 'page_size') return;
+                    query.append(key, value);
+                });
+            }
+            return query.toString();
+        }
+
+        function initRemoteFilterSelects() {
+            if (typeof window.jQuery === 'undefined') return;
+            var $ = window.jQuery;
+            if (!$.fn || !$.fn.select2) return;
+
+            _remoteFilterDefs.forEach(function (def) {
+                var el = document.getElementById(def.id);
+                if (!el) {
+                    return;
+                }
+
+                var $el = $(el);
+                if ($el.data('select2')) {
+                    try {
+                        $el.select2('destroy');
+                    } catch (e) { }
+                }
+
+                $el.select2({
+                    width: '220px',
+                    placeholder: def.placeholder,
+                    closeOnSelect: false,
+                    allowClear: false,
+                    ajax: {
+                        url: '/api/dashboard/filter-options/',
+                        dataType: 'json',
+                        delay: 250,
+                        transport: function (params, success, failure) {
+                            var term = (params.data && params.data.term) || '';
+                            var page = (params.data && params.data.page) || 1;
+                            var query = _buildRemoteFilterQueryString(def.field, term, page);
+                            if (_remoteFilterAbortControllers[def.field]) {
+                                try { _remoteFilterAbortControllers[def.field].abort(); } catch (e) { }
+                            }
+                            var controller = new AbortController();
+                            _remoteFilterAbortControllers[def.field] = controller;
+                            fetch('/api/dashboard/filter-options/?' + query, {
+                                credentials: 'same-origin',
+                                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                                signal: controller.signal,
+                            })
+                                .then(function (response) {
+                                    if (!response.ok) throw new Error('HTTP ' + response.status);
+                                    return response.json();
+                                })
+                                .then(success)
+                                .catch(function (err) {
+                                    if (err && err.name === 'AbortError') return;
+                                    failure(err);
+                                });
+                        },
+                        processResults: function (data) {
+                            return {
+                                results: (data.results || []).map(function (row) {
+                                    return { id: row.value, text: row.label };
+                                }),
+                                pagination: {
+                                    more: !!(data.pagination && data.pagination.has_next),
+                                },
+                            };
+                        },
+                        cache: true,
+                    },
+                    minimumInputLength: 0,
+                });
+            });
+        }
+
+
+
+        // ── Export / Download section visibility ─────────────────────────────────
+        var DASHBOARD_EXPORT_VIEWS = ['business', 'ceo', 'category'];
+
+        function syncExportSection() {
+            var viewType = window.DASHBOARD_VIEW_TYPE || '';
+            var exportSec = document.getElementById('downloadExportSection');
+            if (!exportSec) return;
+            exportSec.style.display = DASHBOARD_EXPORT_VIEWS.includes(viewType) ? 'block' : 'none';
+        }
+
+        // Run on initial full page load
+        document.addEventListener('DOMContentLoaded', function () {
+            syncExportSection();
+        });
+
+        // Re-run after every HTMX navigation into a dashboard
+        document.addEventListener('dashboardContentLoaded', function () {
+            // 0. CRITICAL: Clear any page-specific CSS that was injected by non-dashboard pages
+            //    (Upload, User Management, Role Management, Replenishment inject their own CSS
+            //    into <style id="page-specific-styles"> which persists in <head> across HTMX
+            //    navigation and distorts the dashboard card grid/layout sizing).
+            var pageStyles = document.getElementById('page-specific-styles');
+            if (pageStyles) pageStyles.textContent = '';
+
+            // 1. Re-initialize remote dropdowns on fresh server-rendered select elements
+            initRemoteFilterSelects();
+            if (typeof initFlatpickr === 'function') initFlatpickr();
+            if (typeof syncFilterVisibility === 'function') syncFilterVisibility();
+            if (typeof bindFilterFormGuards === 'function') bindFilterFormGuards();
+            if (typeof setApplyFiltersLoading === 'function') setApplyFiltersLoading(false);
+
+            // 2. Restore custom date group visibility if 'custom' date range is selected
+            //    After HTMX loads, the customDateGroup is re-rendered with server-side state
+            //    (hidden by default), but we need to show it if 'custom' is still selected.
+            var dateRangeSelect = document.getElementById('dateRangeSelect');
+            var customDateGroup = document.getElementById('customDateGroup');
+            if (dateRangeSelect && customDateGroup && dateRangeSelect.value === 'custom') {
+                customDateGroup.style.display = 'flex';
+            }
+
+            // 3. Show/hide the export buttons
+            syncExportSection();
+        });
+
+        function downloadCalculatedData(format) {
+            var params = new URLSearchParams(window.location.search || '');
+            var platformEl = document.getElementById('platformSelect');
+            var selectedPlatform = platformEl ? (platformEl.value || '').trim() : '';
+
+            // Keep export in sync with the visible platform filter.
+            if (selectedPlatform) {
+                params.set('platform', selectedPlatform);
+            } else {
+                params.delete('platform');
+            }
+
+            // If platform is "All" (empty), force user to choose one platform for export.
+            // Export output schema/calculations differ across Amazon vs Flipkart.
+            if (!selectedPlatform) {
+                var choice = window.prompt(
+                    'Would you like to download Amazon data or Flipkart data?\nType: Amazon or Flipkart'
+                );
+                if (choice === null) return; // user cancelled
+
+                choice = choice.trim().toLowerCase();
+                if (choice === 'amazon') {
+                    params.set('export_platform', 'Amazon');
+                } else if (choice === 'flipkart') {
+                    params.set('export_platform', 'Flipkart');
+                } else {
+                    alert('Please type exactly "Amazon" or "Flipkart".');
+                    return;
+                }
+            } else {
+                params.delete('export_platform');
+            }
+
+            var query = params.toString();
+            var url = '/dashboard/download/' + format + '/' + (query ? ('?' + query) : '');
+            window.location.href = url;
+        }
+
+        var dashboardRefreshPollTimer = null;
+        var dashboardRefreshLastState = null;
+        var dashboardRefreshTerminalHideTimer = null;
+
+        function clearDashboardTerminalHideTimer() {
+            if (!dashboardRefreshTerminalHideTimer) return;
+            clearTimeout(dashboardRefreshTerminalHideTimer);
+            dashboardRefreshTerminalHideTimer = null;
+        }
+
+        function renderDashboardRefreshBanner(status) {
+            var banner = document.getElementById('dashboardRefreshBanner');
+            var text = document.getElementById('dashboardRefreshBannerText');
+            var icon = document.getElementById('dashboardRefreshBannerIcon');
+            if (!banner || !text || !icon) return;
+
+            var state = (status && status.state) ? String(status.state).toLowerCase() : 'idle';
+            var message = (status && status.message) ? String(status.message) : '';
+
+            if (state === 'processing') {
+                clearDashboardTerminalHideTimer();
+                banner.style.display = 'flex';
+                banner.style.background = '#fef3c7';
+                banner.style.color = '#92400e';
+                banner.style.border = '1px solid #f59e0b';
+                icon.textContent = 'autorenew';
+                text.textContent = message || 'Dashboard updating in process as per the new uploaded data.';
+            } else if (state === 'success') {
+                clearDashboardTerminalHideTimer();
+                banner.style.display = 'flex';
+                banner.style.background = '#dcfce7';
+                banner.style.color = '#166534';
+                banner.style.border = '1px solid #22c55e';
+                icon.textContent = 'check_circle';
+                text.textContent = message || 'Dashboard updated with the new updated data.';
+                dashboardRefreshTerminalHideTimer = setTimeout(function () {
+                    banner.style.display = 'none';
+                }, 9000);
+            } else if (state === 'error') {
+                clearDashboardTerminalHideTimer();
+                banner.style.display = 'flex';
+                banner.style.background = '#fee2e2';
+                banner.style.color = '#991b1b';
+                banner.style.border = '1px solid #ef4444';
+                icon.textContent = 'error';
+                text.textContent = message || 'Dashboard update failed.';
+                dashboardRefreshTerminalHideTimer = setTimeout(function () {
+                    banner.style.display = 'none';
+                }, 9000);
+            } else {
+                clearDashboardTerminalHideTimer();
+                banner.style.display = 'none';
+            }
+        }
+
+        function startDashboardRefreshPolling() {
+            if (dashboardRefreshPollTimer) return;
+            dashboardRefreshPollTimer = setInterval(fetchDashboardRefreshStatus, 3000);
+        }
+
+        function stopDashboardRefreshPolling() {
+            if (!dashboardRefreshPollTimer) return;
+            clearInterval(dashboardRefreshPollTimer);
+            dashboardRefreshPollTimer = null;
+        }
+
+        async function fetchDashboardRefreshStatus() {
+            try {
+                var resp = await fetch('/api/dashboard/refresh-status/', {
+                    credentials: 'same-origin',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                if (!resp.ok) return;
+                var data = await resp.json();
+                renderDashboardRefreshBanner(data);
+
+                var state = (data && data.state) ? String(data.state).toLowerCase() : 'idle';
+                if (state === 'processing') {
+                    startDashboardRefreshPolling();
+                } else {
+                    stopDashboardRefreshPolling();
+                }
+                dashboardRefreshLastState = state;
+            } catch (e) {
+                // Keep UI stable on temporary network errors.
+            }
+        }
+
+        // ── HTMX loading spinner ────────────────────────────────────────────────
+        (function () {
+            var overlay = document.getElementById('htmxLoadingOverlay');
+            if (!overlay) return;
+            window.__dashboardActiveHtmxXhr = null;
+
+            document.body.addEventListener('htmx:beforeRequest', function (e) {
+                // Only show overlay for dashboard navigation swaps, not filter form submits
+                // (filter submits still feel fast; navigation to other dashboards can be slow)
+                var target = e.detail && e.detail.target;
+                var xhr = e.detail && e.detail.xhr;
+                // Cancel stale in-flight dashboard requests
+                if (target && target.classList && target.classList.contains('dash-body') && xhr) {
+                    if (window.__dashboardActiveHtmxXhr && window.__dashboardActiveHtmxXhr !== xhr) {
+                        try { window.__dashboardActiveHtmxXhr.abort(); } catch (abortErr) {}
+                    }
+                    window.__dashboardActiveHtmxXhr = xhr;
+                }
+                if (target && target.classList && target.classList.contains('dash-body')) {
+                    overlay.style.display = 'flex';
+                }
+            });
+
+            document.body.addEventListener('htmx:afterSettle', function () {
+                window.__dashboardActiveHtmxXhr = null;
+                setApplyFiltersLoading(false);
+                overlay.style.display = 'none';
+            });
+
+            document.body.addEventListener('htmx:responseError', function () {
+                window.__dashboardActiveHtmxXhr = null;
+                setApplyFiltersLoading(false);
+                overlay.style.display = 'none';
+            });
+        })();
+
+        document.addEventListener('DOMContentLoaded', function () {
+            renderDashboardRefreshBanner(window.DASHBOARD_REFRESH_STATUS || { state: 'idle', message: '' });
+            var initialState = ((window.DASHBOARD_REFRESH_STATUS || {}).state || 'idle').toLowerCase();
+            dashboardRefreshLastState = initialState;
+            if (initialState === 'processing') {
+                startDashboardRefreshPolling();
+            } else {
+                fetchDashboardRefreshStatus();
+            }
+        });
+    </script>
+    {% block dashboard_scripts %}{% endblock %}
+</body>
+
+</html>

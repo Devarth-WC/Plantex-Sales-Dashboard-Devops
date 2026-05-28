@@ -1,0 +1,36 @@
+{% extends base_template %}
+{% load dashboard_extras %}
+
+{% block page_title %}Business Dashboard{% endblock %}
+{% block dashboard_title %}Business Dashboard{% endblock %}
+{% block user_role %}Business Head{% endblock %}
+{% block view_type %}business{% endblock %}
+
+{% block dashboard_content %}
+<div id="business-section-overview"
+     hx-get="{% url 'dashboard-section' view_name='business' section='overview' %}?scope=kpis"
+     hx-include="#dashboardFilterForm"
+     hx-trigger="load once"
+     hx-sync="this:replace"
+     hx-swap="innerHTML">
+    {% include "dashboard/partials/kpi_skeleton_cards.html" %}
+</div>
+
+<div id="business-section-visuals"
+     hx-get="{% url 'dashboard-section' view_name='business' section='visuals' %}?scope=analytics"
+     hx-include="#dashboardFilterForm"
+     hx-trigger="load once delay:80ms"
+     hx-sync="this:replace"
+     hx-swap="innerHTML">
+    {% include "dashboard/partials/visuals_skeleton.html" %}
+</div>
+
+<div id="business-section-details"
+     hx-get="{% url 'dashboard-section' view_name='business' section='details' %}?scope=analytics"
+     hx-include="#dashboardFilterForm"
+     hx-trigger="load once delay:160ms"
+     hx-sync="this:replace"
+     hx-swap="innerHTML">
+    {% include "dashboard/partials/details_skeleton.html" %}
+</div>
+{% endblock %}

@@ -1,0 +1,180 @@
+{% load dashboard_extras %}
+<!-- OOB swap for the topbar title -->
+<div id="page-topbar-title" class="topbar-title" hx-swap-oob="true">
+    {% block dashboard_title %}Dashboard{% endblock %}
+</div>
+
+<!-- OOB swap for the document title -->
+<title id="page-document-title" hx-swap-oob="true">Plantex — {% block page_title %}Sales Dashboard{% endblock %}</title>
+
+<!-- OOB swap for the topbar subtitle -->
+<div id="page-topbar-subtitle" class="topbar-subtitle" hx-swap-oob="true">
+    {% block dashboard_subtitle %}Real-time business overview & performance insights{% endblock %}
+</div>
+
+<!-- OOB swap for page specific CSS (crucial for Admin / Upload pages) -->
+<style id="page-specific-styles" hx-swap-oob="true">
+    {% block extra_head_css %}{% endblock %}
+</style>
+
+<!-- OOB swap for the user role -->
+<span id="page-user-role" class="user-role" hx-swap-oob="true">{% block user_role %}Business Head{% endblock %}</span>
+
+<!-- OOB swap for stock upload warning banner -->
+<div id="stockUploadBanner" hx-swap-oob="true"
+    class="stock-upload-banner {% if show_stock_upload_banner %}is-visible{% else %}is-hidden{% endif %}">
+    <div class="stock-upload-banner-icon">
+        <span class="material-icons-round">inventory_2</span>
+    </div>
+    <div class="stock-upload-banner-content">
+        <div class="stock-upload-banner-title">Inventory Health Needs Today’s Stock Upload</div>
+        <div class="stock-upload-banner-text">Please upload today's Amazon and Flipkart stock files to get accurate inventory health.</div>
+    </div>
+    <a href="{% url 'dashboard-upload' %}" class="stock-upload-banner-cta">
+        <span class="material-icons-round">upload_file</span>
+        Upload Now
+    </a>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     OOB swap for the TOPBAR FILTER BAR
+     This fully re-renders the filter form with correct server-side option data
+     every time a dashboard is loaded via HTMX navigation.
+
+     Why: non-dashboard pages (Upload, Replenishment, User/Role Management)
+     inject CSS that hides .topbar-filters. That CSS stays in <head> after
+     HTMX navigation. By OOB-swapping the entire #dashboardTopbarFilters div
+     we get a fresh, fully-visible filter form regardless of the previous page.
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<div id="dashboardTopbarFilters" hx-swap-oob="true">
+</div>
+
+<!-- OOB swap for the SECONDARY FILTER BAR -->
+<div class="secondary-filter-bar" id="secondaryFilters" hx-swap-oob="true" {% if request.resolver_match.url_name != 'ceo-dashboard' and request.resolver_match.url_name != 'business-dashboard' and request.resolver_match.url_name != 'category-dashboard' %}style="display:none;"{% endif %}>
+    {% if request.resolver_match.url_name == 'ceo-dashboard' or request.resolver_match.url_name == 'business-dashboard' or request.resolver_match.url_name == 'category-dashboard' %}
+    <form method="GET" action="{{ request.path }}" class="topbar-filters" style="margin:0;" id="dashboardFilterForm"
+        hx-get="{{ request.path }}" hx-target=".dash-body" hx-push-url="true" hx-swap="innerHTML" hx-trigger="submit" hx-sync="body:abort">
+
+        <div class="topbar-filter-group filter-group-uniform">
+            <span class="filter-label">Date Range</span>
+            <select class="filter-select-top" id="dateRangeSelect" name="date_range"
+                onchange="handleDateRangeChange(event, this)">
+                <option value="">All Time</option>
+                <option value="yesterday" {% if request.GET.date_range == "yesterday" %}selected{% endif %}>Yesterday
+                </option>
+                <option value="last_7_days" {% if request.GET.date_range == "last_7_days" %}selected{% endif %}>Last 7
+                    Days</option>
+                <option value="last_15_days" {% if request.GET.date_range == "last_15_days" %}selected{% endif %}>Last 15
+                    Days</option>
+                <option value="last_month" {% if request.GET.date_range == "last_month" %}selected{% endif %}>Last Month
+                </option>
+                <option value="last_3_months" {% if request.GET.date_range == "last_3_months" %}selected{% endif %}>Last 3
+                    Months</option>
+                <option value="last_6_months" {% if request.GET.date_range == "last_6_months" %}selected{% endif %}>Last 6
+                    Months</option>
+                <option value="last_1_year" {% if request.GET.date_range == "last_1_year" %}selected{% endif %}>Last 1
+                    Year</option>
+                <option value="custom" {% if request.GET.date_range == "custom" %}selected{% endif %}>Custom Dates
+                </option>
+            </select>
+        </div>
+        <div class="topbar-filter-group custom-date-group" id="customDateGroup"
+            style="display: {% if request.GET.date_range == 'custom' %}flex{% else %}none{% endif %}; margin-left: 4px;">
+            <span class="filter-label">&nbsp;</span>
+            <div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
+                <input type="text" id="flatpickrRange" placeholder="Select Dates..."
+                    style="width: 220px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 7px 12px; font-size: 13px; font-family: 'Inter', sans-serif; color: #0f172a; outline: none; cursor: pointer; transition: border-color 0.2s;"
+                    onfocus="this.style.borderColor='#3b82f6'">
+                <input type="hidden" id="customStartDate" name="start_date" value="{{ request.GET.start_date }}">
+                <input type="hidden" id="customEndDate" name="end_date" value="{{ request.GET.end_date }}">
+                <button type="button"
+                    style="padding: 7px 16px; background: #2563eb; color: #ffffff; border: none; border-radius: 6px; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 12px; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 4px rgba(37,99,235,0.2);"
+                    onmouseover="this.style.background='#1d4ed8'; this.style.transform='translateY(-1px)';"
+                    onmouseout="this.style.background='#2563eb'; this.style.transform='translateY(0)';"
+                    onclick="submitCustomDate()">Apply</button>
+            </div>
+        </div>
+        <div class="topbar-filter-group filter-group-uniform">
+            <span class="filter-label">Platform</span>
+            <select class="filter-select-top" id="platformSelect" name="platform"
+                onchange="syncFilterVisibility(); markFiltersDirty()">
+                <option value="">All</option>
+                <option value="Amazon" {% if request.GET.platform == "Amazon" %}selected{% endif %}>Amazon</option>
+                <option value="Flipkart" {% if request.GET.platform == "Flipkart" %}selected{% endif %}>Flipkart</option>
+            </select>
+        </div>
+
+        <div class="topbar-filter-group filter-group-multi filter-group-uniform">
+            <span class="filter-label">
+                <span class="material-icons-round"
+                    style="font-size:11px;vertical-align:middle;margin-right:3px;">category</span>Category
+            </span>
+            <select id="categorySelect" name="category" class="filter-select-top" multiple
+                onchange="markFiltersDirty()">
+                {% for c in selected_filters.categories %}
+                <option value="{{ c }}" selected>{{ c }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="topbar-filter-group filter-group-multi filter-group-asin filter-group-uniform">
+            <span class="filter-label">
+                <span class="material-icons-round"
+                    style="font-size:11px;vertical-align:middle;margin-right:3px;">qr_code</span>ASIN
+            </span>
+            <select id="asinSelect" name="asin" class="filter-select-top" multiple
+                onchange="markFiltersDirty()">
+                {% for a in selected_filters.asins %}
+                <option value="{{ a }}" selected>{{ a }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="topbar-filter-group filter-group-multi filter-group-uniform" id="fsnFilterGroup" style="display:none;">
+            <span class="filter-label">
+                <span class="material-icons-round"
+                    style="font-size:11px;vertical-align:middle;margin-right:3px;">qr_code</span>FSN
+            </span>
+            <select id="fsnSelect" name="fsn" class="filter-select-top" multiple
+                onchange="markFiltersDirty()">
+                {% for f in selected_filters.fsns %}
+                <option value="{{ f }}" selected>{{ f }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="topbar-filter-group topbar-filter-action-group">
+            <span class="filter-label filter-label-spacer" aria-hidden="true">Actions</span>
+            <button type="button" class="filter-action-btn" id="applyFiltersBtn" data-pending="0"
+                data-loading="0" onclick="applyDashboardFilters()" title="Apply selected filters">
+                <span class="material-icons-round" aria-hidden="true">filter_alt</span>
+                <span class="filter-action-btn__label" data-role="label">Apply Filters</span>
+            </button>
+        </div>
+
+        <div class="topbar-filter-group topbar-filter-action-group">
+            <span class="filter-label filter-label-spacer" aria-hidden="true">Actions</span>
+            <button type="button" class="btn-text-reset" onclick="window.location.href=window.location.pathname"
+                title="Reset all filters">Reset Filters</button>
+        </div>
+    </form>
+    {% endif %}
+</div>
+
+
+<!-- Main dashboard content swap target -->
+{% block dashboard_content %}{% endblock %}
+<span data-view-type="{% block view_type %}none{% endblock %}" style="display: none;"></span>
+<script>
+    // Set view type from the data attribute
+    window.DASHBOARD_VIEW_TYPE = document.querySelector('[data-view-type]')?.getAttribute('data-view-type') || 'business';
+
+    // Update window payload from the newly loaded content
+    window.DASHBOARD_PAYLOAD = {{ payload_json|safe|default:"null" }};
+    window.SELECTED_FILTERS = {{ selected_filters_json|safe|default:"{}" }};
+
+    // Signal that content has loaded — fires AFTER all OOB swaps are applied
+    // so repopulateFilterDropdowns / syncExportSection / initCharts all see
+    // the freshly-rendered filter form in the DOM.
+    document.dispatchEvent(new CustomEvent('dashboardContentLoaded', {
+        detail: { viewType: window.DASHBOARD_VIEW_TYPE }
+    }));
+</script>

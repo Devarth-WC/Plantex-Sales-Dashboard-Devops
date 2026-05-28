@@ -1,0 +1,17 @@
+{% load dashboard_extras %}
+{% for prod in rows %}
+<tr>
+    <td>
+        <div class="ceo-sku-cell">
+            <div class="ceo-sku-thumb">📦</div>
+            <span>{{ prod.sku }}</span>
+        </div>
+    </td>
+    <td class="num growth-down">▼ {{ prod.drop_pct|abs_val }}%</td>
+    <td class="num" style="color:var(--danger);">-{{ prod.impact|fmt_rupee }}</td>
+</tr>
+{% empty %}
+<tr>
+    <td colspan="3" class="empty">No data available</td>
+</tr>
+{% endfor %}

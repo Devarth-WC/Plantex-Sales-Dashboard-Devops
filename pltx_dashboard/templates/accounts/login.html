@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://cdn.shopify.com" crossorigin>
+  <link rel="icon" type="image/png"
+    href="//www.plantex.in/cdn/shop/files/Plantex_Favicon.jpg?crop=center&height=32&v=1775624855&width=32">
+  <link rel="preconnect" href="https://fonts.shopifycdn.com" crossorigin>
+  <title>Login — Sales Intelligence</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(circle at top left, #eff6ff 0%, #f4f7f9 40%, #fdf4ff 100%);
+      color: #0f172a;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background-image:
+        linear-gradient(rgba(148, 163, 184, .08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148, 163, 184, .08) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    .auth-card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 440px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(24px) saturate(150%);
+      border: 1px solid rgba(226, 232, 240, 0.8);
+      border-radius: 24px;
+      padding: 48px 40px 40px;
+      box-shadow: 0 20px 40px -5px rgba(15, 23, 42, 0.08), 0 10px 15px -5px rgba(15, 23, 42, 0.03);
+    }
+
+    .auth-brand {
+      font-family: 'Outfit', sans-serif;
+      font-size: 15px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, #4f46e5, #0ea5e9);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .auth-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+
+    .auth-sub {
+      font-size: 14px;
+      color: #64748b;
+      margin-bottom: 32px;
+      line-height: 1.5;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 8px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 14px 16px;
+      background: rgba(255, 255, 255, 0.4);
+      border: 1.5px solid rgba(226, 232, 240, 0.8);
+      border-radius: 12px;
+      color: #0f172a;
+      font-size: 15px;
+      font-family: 'Inter', sans-serif;
+      transition: all .25s ease;
+      outline: none;
+    }
+
+    .form-group input::placeholder {
+      color: #94a3b8;
+    }
+
+    .form-group input:hover {
+      border-color: #94a3b8;
+      background: rgba(255, 255, 255, 0.6);
+    }
+
+    .form-group input:focus {
+      background: #ffffff;
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 4px rgba(79, 70, 229, .15);
+    }
+
+    .form-group input.error-input {
+      border-color: #ef4444;
+      background: #fef2f2;
+    }
+
+    .form-group input.error-input:focus {
+      box-shadow: 0 0 0 4px rgba(239, 68, 68, .15);
+    }
+
+    .error-text {
+      font-size: 12px;
+      color: #dc2626;
+      margin-top: 6px;
+      font-weight: 500;
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-family: 'Outfit', sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      background: linear-gradient(135deg, #4f46e5, #0ea5e9);
+      box-shadow: 0 8px 20px rgba(79, 70, 229, .25);
+      transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(79, 70, 229, .35);
+    }
+
+    .auth-footer {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 14px;
+      color: #64748b;
+    }
+
+    .auth-footer a {
+      color: #2563eb;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color .2s;
+    }
+
+    .auth-footer a:hover {
+      color: #1d4ed8;
+    }
+
+    .alert-box {
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 13px;
+      margin-bottom: 8px;
+      border: 1px solid rgba(239, 68, 68, .2);
+      background: #fef2f2;
+      color: #b91c1c;
+      font-weight: 500;
+    }
+
+    .alert-success {
+      border-color: rgba(16, 185, 129, .2);
+      background: #f0fdf4;
+      color: #047857;
+    }
+
+    .alerts-container {
+      margin-bottom: 24px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="auth-card">
+    <div class="auth-brand">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="url(#brandGradient)" stroke="url(#brandGradient)" stroke-width="2.5"
+        stroke-linecap="round" stroke-linejoin="round">
+        <defs>
+          <linearGradient id="brandGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#4f46e5" />
+            <stop offset="100%" stop-color="#0ea5e9" />
+          </linearGradient>
+        </defs>
+        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+      </svg>
+      Sales Intelligence
+    </div>
+    <div class="auth-title">Welcome Back</div>
+    <div class="auth-sub">Sign in to securely access your business performance dashboard.</div>
+
+    {% if messages %}
+    <div class="alerts-container">
+      {% for msg in messages %}
+      <div class="alert-box {% if msg.tags == 'info' or msg.tags == 'success' %}alert-success{% endif %}">{{ msg }}
+      </div>
+      {% endfor %}
+    </div>
+    <script>
+      setTimeout(() => {
+        const alerts = document.querySelector('.alerts-container');
+        if (alerts) {
+          alerts.style.transition = 'opacity 0.4s ease, height 0.4s ease';
+          alerts.style.opacity = '0';
+          setTimeout(() => alerts.remove(), 400);
+        }
+      }, 4000);
+    </script>
+    {% endif %}
+
+    <form method="POST" action="{% url 'account-login' %}">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" name="email" placeholder="you@company.com" value="{{ email|default:'' }}"
+          class="{% if errors.email %}error-input{% endif %}">
+        {% if errors.email %}<div class="error-text">{{ errors.email }}</div>{% endif %}
+      </div>
+
+      <div class="form-group">
+        <label for="pswd">Password</label>
+        <input type="password" id="pswd" name="pswd" placeholder="••••••••"
+          class="{% if errors.pswd %}error-input{% endif %}">
+        {% if errors.pswd %}<div class="error-text">{{ errors.pswd }}</div>{% endif %}
+      </div>
+
+      <button type="submit" class="btn-primary">
+        Sign In
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </button>
+    </form>
+
+  </div>
+</body>
+
+</html>

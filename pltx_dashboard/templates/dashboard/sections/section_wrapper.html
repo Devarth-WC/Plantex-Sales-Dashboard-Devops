@@ -1,0 +1,23 @@
+{% include section_template %}
+<script>
+    window.DASHBOARD_PAYLOAD = {{ payload_json|safe|default:"null" }};
+    document.body.dispatchEvent(new CustomEvent('dashboardPayloadReady'));
+    document.body.dispatchEvent(new CustomEvent('dashboardSectionLoaded', {
+        detail: {
+            viewType: '{{ dashboard_section_view_type }}',
+            section: '{{ dashboard_section_name }}'
+        }
+    }));
+    {% if dashboard_section_name == 'overview' %}
+    document.body.dispatchEvent(new CustomEvent('dashboardOverviewLoaded', {
+        detail: { viewType: '{{ dashboard_section_view_type }}' }
+    }));
+    {% elif dashboard_section_name == 'visuals' %}
+    document.body.dispatchEvent(new CustomEvent('dashboardVisualsLoaded', {
+        detail: { viewType: '{{ dashboard_section_view_type }}' }
+    }));
+    {% endif %}
+    document.dispatchEvent(new CustomEvent('dashboardContentLoaded', {
+        detail: { viewType: '{{ dashboard_section_view_type }}' }
+    }));
+</script>

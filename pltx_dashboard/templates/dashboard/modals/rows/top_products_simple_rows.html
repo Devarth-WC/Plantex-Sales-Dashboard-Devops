@@ -1,0 +1,18 @@
+{% load dashboard_extras %}
+{% for prod in rows %}
+<tr>
+    <td>
+        <div class="ceo-sku-cell">
+            <div class="ceo-sku-thumb">📦</div><span>{{ prod.sku }}</span>
+        </div>
+    </td>
+    <td class="num" data-order="{{ prod.revenue|default:0 }}">{{ prod.revenue|fmt_rupee }}</td>
+    <td class="num {% if prod.growth >= 0 %}growth-up{% else %}growth-down{% endif %}" data-order="{{ prod.growth|default:0 }}">
+        {% if prod.growth >= 0 %}▲{% else %}▼{% endif %} {{ prod.growth|abs_val }}%
+    </td>
+</tr>
+{% empty %}
+<tr>
+    <td colspan="3" class="empty">No data available</td>
+</tr>
+{% endfor %}

@@ -1,0 +1,276 @@
+{% load dashboard_extras %}
+<!-- ════════════ VIEW ALL MODALS ════════════ -->
+
+<!-- Cluster Performance Modal -->
+<div class="tbl-overlay" id="clusterModal" data-lazy-url="{% url 'dashboard-modal-rows' 'category' 'cluster-performance' %}">
+    <div class="tbl-overlay-inner">
+        <div class="tbl-overlay-header">
+            <span class="tbl-overlay-title">Cluster Performance — Full View</span>
+            <button class="tbl-overlay-close" onclick="closeModal('clusterModal')">✕ Close</button>
+        </div>
+        <div class="tbl-overlay-scroll">
+            <table class="ceo-table" style="min-width:500px;">
+                <thead>
+                    <tr>
+                        <th>Cluster</th>
+                        <th class="num">Revenue</th>
+                        <th class="num">Growth</th>
+                        <th class="num">Contribution</th>
+                    </tr>
+                </thead>
+                <tbody data-modal-lazy="1">
+                    <tr>
+                        <td colspan="4" class="empty">Loading data...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Top Revenue Contributors Modal -->
+<div class="tbl-overlay" id="topProductsModal" data-lazy-url="{% url 'dashboard-modal-rows' 'category' 'top-products' %}">
+    <div class="tbl-overlay-inner">
+        <div class="tbl-overlay-header">
+            <span class="tbl-overlay-title">Top Revenue Contributors — Full View</span>
+            <button class="tbl-overlay-close" onclick="closeModal('topProductsModal')">✕ Close</button>
+        </div>
+        <div class="tbl-overlay-scroll">
+            <table class="ceo-table" style="min-width:700px;">
+                <thead>
+                    <tr>
+                        <th>SKU</th>
+                        <th>Cluster</th>
+                        <th class="num">Revenue</th>
+                        <th class="num">Growth</th>
+                        <th class="num">Units</th>
+                    </tr>
+                </thead>
+                <tbody data-modal-lazy="1">
+                    <tr>
+                        <td colspan="5" class="empty">Loading data...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Declining Products Modal -->
+<div class="tbl-overlay" id="decliningModal" data-lazy-url="{% url 'dashboard-modal-rows' 'category' 'declining-products' %}">
+    <div class="tbl-overlay-inner">
+        <div class="tbl-overlay-header">
+            <span class="tbl-overlay-title">Declining Products (MOM) — Full View</span>
+            <button class="tbl-overlay-close" onclick="closeModal('decliningModal')">✕ Close</button>
+        </div>
+        <div class="tbl-overlay-scroll">
+            <table class="ceo-table" style="min-width:600px;">
+                <thead>
+                    <tr>
+                        <th>SKU</th>
+                        <th class="num">MOM Drop %</th>
+                        <th class="num">Impact (₹)</th>
+                    </tr>
+                </thead>
+                <tbody data-modal-lazy="1">
+                    <tr>
+                        <td colspan="3" class="empty">Loading data...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Inventory Health Breakdown Modal -->
+<div class="tbl-overlay inventory-health-modal" id="catInventoryHealthModal" data-lazy-url="{% url 'dashboard-modal-rows' 'category' 'inventory-health' %}">
+    <div class="tbl-overlay-inner" style="max-width: 1000px;">
+        <div class="tbl-overlay-header">
+            <div>
+                <span class="tbl-overlay-title">Inventory Health Breakdown (DOC)</span>
+                <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">
+                    DOC = Stock Qty / Same-Day Sales.
+                    OOS: Stock=0. Low Stock: DOC≤15. In Stock: 15&lt;DOC≤60. Overstock: DOC&gt;60.
+                </div>
+                {% if payload.inventory.details_truncated %}
+                <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">
+                    Showing latest {{ payload.inventory.details_shown|fmt_num }} of {{ payload.inventory.details_total|fmt_num }} rows.
+                </div>
+                {% endif %}
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;">
+                    <input
+                        type="text"
+                        class="inv-health-search"
+                        placeholder="Search date, SKU, category, status..."
+                        style="min-width:260px;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;"
+                    >
+                    <button type="button" class="ceo-view-all-btn inv-health-download" data-format="csv">Download CSV</button>
+                    <button type="button" class="ceo-view-all-btn inv-health-download" data-format="excel">Download Excel</button>
+                </div>
+            </div>
+            <button class="tbl-overlay-close" onclick="closeModal('catInventoryHealthModal')">✕ Close</button>
+        </div>
+        <div class="tbl-overlay-scroll">
+            <table class="ceo-table inv-health-table" style="min-width: 800px;">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>SKU</th>
+                        <th>Category</th>
+                        <th class="num">Stock Qty</th>
+                        <th class="num">Sale Qty</th>
+                        <th class="num">DOC (Days)</th>
+                        <th class="num">Revenue</th>
+                        <th>Status</th>
+                        <th>Calculation</th>
+                    </tr>
+                </thead>
+                <tbody data-modal-lazy="1">
+                    <tr>
+                        <td colspan="9" class="empty">Loading data...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="tbl-overlay oos-calc-modal" id="catOosImpactModal">
+    <div class="tbl-overlay-inner oos-calc-inner">
+        <div class="tbl-overlay-header">
+            <div>
+                <span class="tbl-overlay-title">OOS Impact Calculation</span>
+                <div class="oos-calc-subtitle">
+                    This view explains how the category dashboard translates out-of-stock rows into revenue impact and missed demand.
+                </div>
+            </div>
+            <button class="tbl-overlay-close" onclick="closeModal('catOosImpactModal')">✕ Close</button>
+        </div>
+        <div class="tbl-overlay-scroll oos-calc-scroll">
+            <div class="oos-calc-hero">
+                <div>
+                    <div class="oos-calc-eyebrow">Inventory Risk Summary</div>
+                    <div class="oos-calc-copy">
+                        Review the exact numbers and interpretation rules behind the OOS impact card for the current category context.
+                    </div>
+                </div>
+                <div class="oos-calc-basis">
+                    <span class="oos-calc-basis-label">Platform basis</span>
+                    <strong>
+                        {% if payload.oos_impact.selected_platform %}
+                        {{ payload.oos_impact.selected_platform }}
+                        {% else %}
+                        Filter-driven mix
+                        {% endif %}
+                    </strong>
+                </div>
+            </div>
+
+            <div class="oos-calc-metrics">
+                <div class="oos-calc-stat danger">
+                    <span class="oos-calc-stat-label">Lost Sales</span>
+                    <strong class="oos-calc-stat-value">{{ payload.oos_impact.lost_sales|fmt_rupee }}</strong>
+                    <span class="oos-calc-stat-note">Estimated revenue currently blocked by OOS inventory</span>
+                </div>
+                <div class="oos-calc-stat">
+                    <span class="oos-calc-stat-label">SKUs Affected</span>
+                    <strong class="oos-calc-stat-value">{{ payload.oos_impact.skus_affected|fmt_num }}</strong>
+                    <span class="oos-calc-stat-note">SKUs included in the category-level stock-out count</span>
+                </div>
+                <div class="oos-calc-stat">
+                    <span class="oos-calc-stat-label">Orders Lost</span>
+                    <strong class="oos-calc-stat-value">{{ payload.oos_impact.orders_lost|fmt_num }}</strong>
+                    <span class="oos-calc-stat-note">Estimated demand not captured while stock was unavailable</span>
+                </div>
+            </div>
+
+            <div class="oos-calc-grid">
+                <article class="oos-calc-panel">
+                    <div class="oos-calc-panel-head">
+                        <span class="oos-calc-panel-kicker">Metric 01</span>
+                        <strong class="oos-calc-panel-title">Lost Sales</strong>
+                    </div>
+                    <p class="oos-calc-panel-copy">
+                        Revenue impact from out-of-stock items within the active category slice.
+                    </p>
+                    <div class="oos-calc-rule-label">Calculation Logic</div>
+                    <div class="oos-calc-rule-copy">{{ payload.oos_impact.lost_sales_rule|default:"Lost Sales is taken from inventory rows marked as out of stock." }}</div>
+                </article>
+
+                <article class="oos-calc-panel">
+                    <div class="oos-calc-panel-head">
+                        <span class="oos-calc-panel-kicker">Metric 02</span>
+                        <strong class="oos-calc-panel-title">SKUs Affected</strong>
+                    </div>
+                    <p class="oos-calc-panel-copy">
+                        Number of SKUs contributing to the OOS impact after platform and dashboard filters are applied.
+                    </p>
+                    <div class="oos-calc-rule-label">Calculation Logic</div>
+                    <div class="oos-calc-rule-copy">{{ payload.oos_impact.sku_rule|default:"SKUs Affected counts rows that are currently marked as OOS." }}</div>
+                </article>
+
+                <article class="oos-calc-panel">
+                    <div class="oos-calc-panel-head">
+                        <span class="oos-calc-panel-kicker">Metric 03</span>
+                        <strong class="oos-calc-panel-title">Orders Lost</strong>
+                    </div>
+                    <p class="oos-calc-panel-copy">
+                        Estimated order volume missed while the SKU could not be fulfilled.
+                    </p>
+                    <div class="oos-calc-rule-label">Calculation Logic</div>
+                    <div class="oos-calc-rule-copy">{{ payload.oos_impact.orders_rule|default:"Orders Lost is not currently calculated, so the dashboard shows 0." }}</div>
+                </article>
+            </div>
+
+            <div class="oos-calc-footnote">
+                <div class="oos-calc-footnote-title">Current platform logic</div>
+                <div class="oos-calc-footnote-copy">
+                    {% if payload.oos_impact.selected_platform %}
+                    <strong>{{ payload.oos_impact.selected_platform }}</strong> platform logic is being used for this calculation.
+                    {% else %}
+                    Current dashboard filters decide which platform rows are included in this calculation.
+                    {% endif %}
+                    Flipkart logic usually treats <strong>OOS</strong> and <strong>Nearly OOS</strong> as the highest stock-risk rows, while Amazon primarily uses the <strong>OOS</strong> bucket for lost-sales impact.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Growth Opportunities Modal -->
+<div class="tbl-overlay" id="growthModal">
+    <div class="tbl-overlay-inner">
+        <div class="tbl-overlay-header">
+            <span class="tbl-overlay-title">Growth Opportunities — Full View</span>
+            <button class="tbl-overlay-close" onclick="closeModal('growthModal')">✕ Close</button>
+        </div>
+        <div class="tbl-overlay-scroll">
+            <table class="ceo-table" style="min-width:600px;">
+                <thead>
+                    <tr>
+                        <th>Search Term</th>
+                        <th>Category</th>
+                        <th class="num">Volume</th>
+                        <th class="num">Growth</th>
+                        <th>Opportunity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for opp in payload.growth_opportunities %}
+                    <tr>
+                        <td style="font-weight:600;">{{ opp.search_term }}</td>
+                        <td>{{ opp.category }}</td>
+                        <td class="num">{{ opp.search_volume|fmt_num }}</td>
+                        <td class="num {% if opp.growth >= 0 %}growth-up{% else %}growth-down{% endif %}">
+                            {% if opp.growth >= 0 %}▲{% else %}▼{% endif %} {{ opp.growth|abs_val|floatformat:0 }}%
+                        </td>
+                        <td>
+                            <span class="ceo-priority-badge {% if opp.opportunity == 'High' %}high{% elif opp.opportunity == 'Medium' %}medium{% else %}low{% endif %}">{{ opp.opportunity }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

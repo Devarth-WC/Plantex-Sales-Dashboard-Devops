@@ -1,0 +1,420 @@
+{% load dashboard_extras %}
+            <!-- ════════════ FULL CATEGORY PERFORMANCE TABLE ════════════ -->
+            <div class="ceo-card" id="biz-full-category-perf" style="margin-top: 24px;">
+                <div class="ceo-card-header"
+                    style="display: flex; justify-content: space-between; align-items: center;">
+                    <span class="ceo-card-title">Category Performance</span>
+                    <div style="position: relative; width: 250px;">
+                        <span class="material-icons-round"
+                            style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 18px; color: var(--muted);">search</span>
+                        <input type="text" id="bizCatSearchInput" placeholder="Search categories..."
+                            style="width: 100%; padding: 8px 12px 8px 36px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; outline: none; transition: border-color 0.2s;"
+                            onfocus="this.style.borderColor='var(--accent)'"
+                            onblur="this.style.borderColor='var(--border)'">
+                    </div>
+                </div>
+                <div class="ceo-card-body no-pad">
+                    <table class="ceo-table" id="bizCategoryPerformanceTable">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th class="num">Revenue</th>
+                                <th class="num">Growth</th>
+                                <th class="num">Contribution</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="4" class="empty"
+                                    style="text-align: center; padding: 20px; color: var(--muted);">Loading data...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="pagination-container"
+                        style="display: flex; justify-content: center; align-items: center; padding: 14px 18px; gap: 6px; border-top: 1px solid var(--border-light);"
+                        id="bizCatPagination"></div>
+                </div>
+            </div>
+
+            <script>
+                (function () {
+                    const endpoint = "{% url 'dashboard-category-performance-rows' 'business' %}";
+                    const table = document.getElementById('bizCategoryPerformanceTable');
+                    const tbody = table ? table.querySelector('tbody') : null;
+                    const searchInput = document.getElementById('bizCatSearchInput');
+                    const paginationControls = document.getElementById('bizCatPagination');
+                    const pageSize = 10;
+                    let currentPage = 1;
+                    let debounceId = null;
+                    let inFlightController = null;
+
+                    if (!table || !tbody || !paginationControls) return;
+
+                    function renderPagination(meta) {
+                        paginationControls.innerHTML = '';
+                        if (!meta || !meta.total_pages || meta.total_pages <= 1) return;
+
+                        const info = document.createElement('span');
+                        info.style.fontSize = '12px';
+                        info.style.color = 'var(--muted)';
+                        info.textContent = `Page ${currentPage} of ${meta.total_pages}`;
+                        paginationControls.appendChild(info);
+
+                        const prevBtn = document.createElement('button');
+                        prevBtn.className = 'btn-page';
+                        prevBtn.innerText = 'Prev';
+                        prevBtn.disabled = !meta.has_prev;
+                        prevBtn.style.opacity = meta.has_prev ? '1' : '0.5';
+                        prevBtn.style.cursor = meta.has_prev ? 'pointer' : 'not-allowed';
+                        prevBtn.onclick = function () {
+                            if (!meta.has_prev) return;
+                            loadPage(currentPage - 1);
+                        };
+                        paginationControls.appendChild(prevBtn);
+
+                        const nextBtn = document.createElement('button');
+                        nextBtn.className = 'btn-page';
+                        nextBtn.innerText = 'Next';
+                        nextBtn.disabled = !meta.has_next;
+                        nextBtn.style.opacity = meta.has_next ? '1' : '0.5';
+                        nextBtn.style.cursor = meta.has_next ? 'pointer' : 'not-allowed';
+                        nextBtn.onclick = function () {
+                            if (!meta.has_next) return;
+                            loadPage(currentPage + 1);
+                        };
+                        paginationControls.appendChild(nextBtn);
+                    }
+
+                    function buildUrl(page) {
+                        const params = new URLSearchParams(window.location.search || '');
+                        params.set('page', String(page));
+                        params.set('page_size', String(pageSize));
+                        const q = searchInput ? String(searchInput.value || '').trim() : '';
+                        if (q) params.set('q', q);
+                        else params.delete('q');
+                        return endpoint + '?' + params.toString();
+                    }
+
+                    function loadPage(page) {
+                        currentPage = page;
+                        tbody.innerHTML = '<tr><td colspan="4" class="empty">Loading data...</td></tr>';
+                        if (inFlightController) {
+                            try { inFlightController.abort(); } catch (e) {}
+                        }
+                        inFlightController = new AbortController();
+                        fetch(buildUrl(page), {
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                            signal: inFlightController.signal
+                        })
+                            .then(function (resp) {
+                                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                                return resp.json();
+                            })
+                            .then(function (data) {
+                                tbody.innerHTML = data.html || '<tr><td colspan="4" class="empty">No data available</td></tr>';
+                                renderPagination(data.pagination || {});
+                            })
+                            .catch(function (err) {
+                                if (err && err.name === 'AbortError') return;
+                                tbody.innerHTML = '<tr><td colspan="4" class="empty">Failed to load data. Please retry.</td></tr>';
+                                paginationControls.innerHTML = '';
+                            });
+                    }
+
+                    if (searchInput) {
+                        searchInput.oninput = function () {
+                            if (debounceId) clearTimeout(debounceId);
+                            debounceId = setTimeout(function () { loadPage(1); }, 250);
+                        };
+                    }
+
+                    loadPage(1);
+                })();
+            </script>
+
+            <!-- ════════════ VIEW ALL MODALS ════════════ -->
+
+            <!-- Category Growth Modal -->
+            <div class="tbl-overlay" id="catGrowthModal" data-lazy-url="{% url 'dashboard-modal-rows' 'business' 'category-growth' %}">
+                <div class="tbl-overlay-inner">
+                    <div class="tbl-overlay-header">
+                        <span class="tbl-overlay-title">All Categories by Growth</span>
+                        <button class="tbl-overlay-close" onclick="closeModal('catGrowthModal')">&#10005; Close</button>
+                    </div>
+                    <div class="tbl-overlay-scroll">
+                        <table class="ceo-table" style="min-width:500px;">
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th class="num">Revenue</th>
+                                    <th class="num">Growth</th>
+                                    <th class="num">Contribution</th>
+                                </tr>
+                            </thead>
+                            <tbody data-modal-lazy="1">
+                                <tr>
+                                    <td colspan="4" class="empty">Loading data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Revenue Contributors Modal -->
+            <div class="tbl-overlay" id="winningModal" data-lazy-url="{% url 'dashboard-modal-rows' 'business' 'top-products' %}">
+                <div class="tbl-overlay-inner">
+                    <div class="tbl-overlay-header">
+                        <span class="tbl-overlay-title">Top Revenue Contributors</span>
+                        <button class="tbl-overlay-close" onclick="closeModal('winningModal')">&#10005; Close</button>
+                    </div>
+                    <div class="tbl-overlay-scroll">
+                        <table class="ceo-table" style="min-width:600px;">
+                            <thead>
+                                <tr>
+                                    <th>SKU</th>
+                                    <th class="num">Revenue</th>
+                                    <th class="num">Growth</th>
+                                </tr>
+                            </thead>
+                            <tbody data-modal-lazy="1">
+                                <tr>
+                                    <td colspan="3" class="empty">Loading data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <!-- Inventory Health Breakdown Modal -->
+            <div class="tbl-overlay inventory-health-modal" id="bizInventoryHealthModal" data-lazy-url="{% url 'dashboard-modal-rows' 'business' 'inventory-health' %}">
+                <div class="tbl-overlay-inner" style="max-width: 1000px;">
+                    <div class="tbl-overlay-header">
+                        <div>
+                            <span class="tbl-overlay-title">Inventory Health Breakdown (DOC)</span>
+                            <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">
+                                DOC = Stock Qty / Same-Day Sales.
+                                OOS: Stock=0. Low Stock: DOC≤15. In Stock: 15&lt;DOC≤60. Overstock: DOC&gt;60.
+                            </div>
+                            {% if payload.inventory.details_truncated %}
+                            <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">
+                                Showing latest {{ payload.inventory.details_shown|fmt_num }} of {{ payload.inventory.details_total|fmt_num }} rows.
+                            </div>
+                            {% endif %}
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;">
+                                <input
+                                    type="text"
+                                    class="inv-health-search"
+                                    placeholder="Search date, SKU, category, status..."
+                                    style="min-width:260px;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;"
+                                >
+                                <button type="button" class="ceo-view-all-btn inv-health-download" data-format="csv">Download CSV</button>
+                                <button type="button" class="ceo-view-all-btn inv-health-download" data-format="excel">Download Excel</button>
+                            </div>
+                        </div>
+                        <button class="tbl-overlay-close" onclick="closeModal('bizInventoryHealthModal')">✕
+                            Close</button>
+                    </div>
+                    <div class="tbl-overlay-scroll">
+                        <table class="ceo-table inv-health-table" style="min-width: 800px;">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>SKU</th>
+                                    <th>Category</th>
+                                    <th class="num">Stock Qty</th>
+                                    <th class="num">Sale Qty</th>
+                                    <th class="num">DOC (Days)</th>
+                                    <th class="num">Revenue</th>
+                                    <th>Status</th>
+                                    <th>Calculation</th>
+                                </tr>
+                            </thead>
+                            <tbody data-modal-lazy="1">
+                                <tr>
+                                    <td colspan="9" class="empty">Loading data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Declining Products (MOM) — Full View Modal -->
+            <div class="tbl-overlay" id="bizDecliningModal" data-lazy-url="{% url 'dashboard-modal-rows' 'business' 'declining-products' %}">
+                <div class="tbl-overlay-inner">
+                    <div class="tbl-overlay-header">
+                        <span class="tbl-overlay-title">Declining Products (MOM) — Full View</span>
+                        <button class="tbl-overlay-close" onclick="closeModal('bizDecliningModal')">✕ Close</button>
+                    </div>
+                    <div class="tbl-overlay-scroll">
+                        <table class="ceo-table" style="min-width:600px;">
+                            <thead>
+                                <tr>
+                                    <th>SKU</th>
+                                    <th class="num">MOM Drop %</th>
+                                    <th class="num">Impact (₹)</th>
+                                </tr>
+                            </thead>
+                            <tbody data-modal-lazy="1">
+                                <tr>
+                                    <td colspan="3" class="empty">Loading data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OOS Impact Details Modal -->
+            <div class="tbl-overlay oos-calc-modal" id="bizOosImpactModal">
+                <div class="tbl-overlay-inner oos-calc-inner">
+                    <div class="tbl-overlay-header">
+                        <div>
+                            <span class="tbl-overlay-title">OOS Impact Calculation</span>
+                            <div class="oos-calc-subtitle">
+                                This view breaks down how the business dashboard estimates stock-out impact from the currently filtered inventory rows.
+                            </div>
+                        </div>
+                        <button class="tbl-overlay-close" onclick="closeModal('bizOosImpactModal')">✕ Close</button>
+                    </div>
+                    <div class="tbl-overlay-scroll oos-calc-scroll">
+                        <div class="oos-calc-hero">
+                            <div>
+                                <div class="oos-calc-eyebrow">Inventory Risk Summary</div>
+                                <div class="oos-calc-copy">
+                                    Use this panel to validate what the OOS card is treating as lost revenue, affected assortment, and missed demand opportunity.
+                                </div>
+                            </div>
+                            <div class="oos-calc-basis">
+                                <span class="oos-calc-basis-label">Platform basis</span>
+                                <strong>
+                                    {% if payload.oos_impact.selected_platform %}
+                                    {{ payload.oos_impact.selected_platform }}
+                                    {% else %}
+                                    Filter-driven mix
+                                    {% endif %}
+                                </strong>
+                            </div>
+                        </div>
+
+                        <div class="oos-calc-metrics">
+                            <div class="oos-calc-stat danger">
+                                <span class="oos-calc-stat-label">Lost Sales</span>
+                                <strong class="oos-calc-stat-value">{{ payload.oos_impact.lost_sales|fmt_rupee }}</strong>
+                                <span class="oos-calc-stat-note">Revenue currently sitting in the OOS bucket</span>
+                            </div>
+                            <div class="oos-calc-stat">
+                                <span class="oos-calc-stat-label">SKUs Affected</span>
+                                <strong class="oos-calc-stat-value">{{ payload.oos_impact.skus_affected|fmt_num }}</strong>
+                                <span class="oos-calc-stat-note">Rows contributing to stock-out impact</span>
+                            </div>
+                            <div class="oos-calc-stat">
+                                <span class="oos-calc-stat-label">Orders Lost</span>
+                                <strong class="oos-calc-stat-value">{{ payload.oos_impact.orders_lost|fmt_num }}</strong>
+                                <span class="oos-calc-stat-note">Estimated missed demand from unavailable stock</span>
+                            </div>
+                        </div>
+
+                        <div class="oos-calc-grid">
+                            <article class="oos-calc-panel">
+                                <div class="oos-calc-panel-head">
+                                    <span class="oos-calc-panel-kicker">Metric 01</span>
+                                    <strong class="oos-calc-panel-title">Lost Sales</strong>
+                                </div>
+                                <p class="oos-calc-panel-copy">
+                                    Revenue impact assigned to rows that the dashboard currently treats as out of stock.
+                                </p>
+                                <div class="oos-calc-rule-label">Calculation Logic</div>
+                                <div class="oos-calc-rule-copy">{{ payload.oos_impact.lost_sales_rule|default:"Lost Sales is taken from inventory rows marked as out of stock." }}</div>
+                            </article>
+
+                            <article class="oos-calc-panel">
+                                <div class="oos-calc-panel-head">
+                                    <span class="oos-calc-panel-kicker">Metric 02</span>
+                                    <strong class="oos-calc-panel-title">SKUs Affected</strong>
+                                </div>
+                                <p class="oos-calc-panel-copy">
+                                    Count of SKUs or rows contributing to the OOS impact total after filters are applied.
+                                </p>
+                                <div class="oos-calc-rule-label">Calculation Logic</div>
+                                <div class="oos-calc-rule-copy">{{ payload.oos_impact.sku_rule|default:"SKUs Affected counts rows that are currently marked as OOS." }}</div>
+                            </article>
+
+                            <article class="oos-calc-panel">
+                                <div class="oos-calc-panel-head">
+                                    <span class="oos-calc-panel-kicker">Metric 03</span>
+                                    <strong class="oos-calc-panel-title">Orders Lost</strong>
+                                </div>
+                                <p class="oos-calc-panel-copy">
+                                    Estimated order opportunity missed while the item was unavailable for sale.
+                                </p>
+                                <div class="oos-calc-rule-label">Calculation Logic</div>
+                                <div class="oos-calc-rule-copy">{{ payload.oos_impact.orders_rule|default:"Orders Lost is not currently calculated, so the dashboard shows 0." }}</div>
+                            </article>
+                        </div>
+
+                        <div class="oos-calc-footnote">
+                            <div class="oos-calc-footnote-title">Current platform logic</div>
+                            <div class="oos-calc-footnote-copy">
+                                {% if payload.oos_impact.selected_platform %}
+                                <strong>{{ payload.oos_impact.selected_platform }}</strong> platform logic is being used for this calculation.
+                                {% else %}
+                                Current dashboard filters decide which platform rows are included in this calculation.
+                                {% endif %}
+                                For Flipkart, the dashboard treats <strong>OOS</strong> and <strong>Nearly OOS</strong> as the highest stock-risk rows. For Amazon, the primary lost-sales bucket is the <strong>OOS</strong> status.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Priority Calculation Details Modal -->
+            <div class="tbl-overlay" id="bizPriorityDetailsModal">
+                <div class="tbl-overlay-inner" style="max-width: 900px;">
+                    <div class="tbl-overlay-header">
+                        <div>
+                            <span class="tbl-overlay-title">Priority Calculation Logic</span>
+                            <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">
+                                System-generated priorities based on business performance thresholds.
+                            </div>
+                        </div>
+                        <button class="tbl-overlay-close" onclick="closeModal('bizPriorityDetailsModal')">✕
+                            Close</button>
+                    </div>
+                    <div class="tbl-overlay-scroll">
+                        <table class="ceo-table">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Priority Task</th>
+                                    <th>Level</th>
+                                    <th>Calculation Logic</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for task in payload.priorities %}
+                                <tr>
+                                    <td style="font-weight: 600; color: var(--muted);">#{{ task.rank }}</td>
+                                    <td>
+                                        <div style="font-weight: 600;">{{ task.title }}</div>
+                                        <div style="font-size: 11px; color: var(--muted);">{{ task.subtitle }}</div>
+                                    </td>
+                                    <td>
+                                        <span class="ceo-priority-badge {% if task.priority == 'High' %}high{% elif task.priority == 'Medium' %}medium{% else %}low{% endif %}">{{ task.priority }}</span>
+                                    </td>
+                                    <td
+                                        style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent);">
+                                        {{ task.calculation }}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
