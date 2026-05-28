@@ -1,4 +1,4 @@
-# Plantex Sales Dashboard 🌿
+# Plantex Sales Dashboard
 
 A powerful, entirely Server-Side Rendered (SSR) analytics platform designed for detailed multi-metric visualization, and fast asynchronous execution. Plantex provides specialized data aggregations for Business, CEO, and Category Manager roles in real time!
 
